@@ -1,7 +1,11 @@
+use color::write_color;
 use console::style;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::{fs::File, process::exit};
+pub mod vec3;
+pub mod color;
+use vec3::Vec3;
 
 fn main() {
     let path = std::path::Path::new("output/book1/image1.jpg");
@@ -26,7 +30,8 @@ fn main() {
             let r: f64 = (i as f64) / ((width - 1) as f64) * 255.999;
             let g: f64 = (j as f64) / ((height - 1) as f64) * 255.999;
             let b: f64 = 0.25 * 255.999;
-            *pixel = image::Rgb([r as u8, g as u8, b as u8]);
+            *pixel = write_color(&Vec3::new(r, g, b));
+            //*pixel = image::Rgb([r as u8, g as u8, b as u8]);
         }
         progress.inc(1);
     }

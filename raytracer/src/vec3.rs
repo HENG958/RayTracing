@@ -9,26 +9,30 @@ pub struct Vec3 {
 
 impl Vec3{
     pub fn x(&self) -> f64{
-        self.x;
+        self.x
     }
 
     pub fn y(&self) -> f64{
-        self.y;
+        self.y
     }
 
     pub fn z(&self) -> f64{
-        self.z;
+        self.z
+    }
+
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Self { x, y, z }
     }
 
     pub fn length_squared(&self) -> f64{
-        self.x * self.x + self.y * self.y + self.z + self.z;
+        self.x * self.x + self.y * self.y + self.z + self.z
     }
 
     pub fn length(&self) -> f64{
-        (self.x * self.x + self.y * self.y + self.z + self.z).sqrt();
+        (self.x * self.x + self.y * self.y + self.z + self.z).sqrt()
     }
 
-    pub fn Mul_Element(a: Self, b: Self) -> Self{
+    pub fn mul_element(a: Self, b: Self) -> Self{
         Self {
             x: a.x * b.x,
             y: a.y * b.y,
@@ -68,11 +72,11 @@ impl Neg for Vec3{
 impl Add for Vec3{
     type Output = Self;
 
-    fn add(self, other: self) -> Self {
+    fn add(self, other: Self) -> Self {
         Self {
             x: self.x + other.x,
             y: self.y + other.y,
-
+            z: self.z + other.z,
         }
     }
 }
