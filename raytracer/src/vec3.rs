@@ -1,4 +1,4 @@
-use::std::ops::{Add, AddAssign, Sub, SubAssign, Div, Mul, MulAssign, Neg};
+use ::std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
@@ -7,16 +7,16 @@ pub struct Vec3 {
     pub z: f64,
 }
 
-impl Vec3{
-    pub fn x(&self) -> f64{
+impl Vec3 {
+    pub fn x(&self) -> f64 {
         self.x
     }
 
-    pub fn y(&self) -> f64{
+    pub fn y(&self) -> f64 {
         self.y
     }
 
-    pub fn z(&self) -> f64{
+    pub fn z(&self) -> f64 {
         self.z
     }
 
@@ -24,15 +24,15 @@ impl Vec3{
         Self { x, y, z }
     }
 
-    pub fn length_squared(&self) -> f64{
+    pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z + self.z
     }
 
-    pub fn length(&self) -> f64{
-        (self.x * self.x + self.y * self.y + self.z + self.z).sqrt()
+    pub fn length(&self) -> f64 {
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
 
-    pub fn mul_element(a: Self, b: Self) -> Self{
+    pub fn mul_element(a: Self, b: Self) -> Self {
         Self {
             x: a.x * b.x,
             y: a.y * b.y,
@@ -40,7 +40,7 @@ impl Vec3{
         }
     }
 
-    pub fn cross(a: Self, b: Self) -> Self{
+    pub fn cross(a: Self, b: Self) -> Self {
         Self {
             x: a.y * b.z - a.z * b.y,
             y: a.z * b.x - a.x * b.z,
@@ -58,7 +58,7 @@ impl Vec3{
     }
 }
 
-impl Neg for Vec3{
+impl Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self {
         Self {
@@ -69,7 +69,7 @@ impl Neg for Vec3{
     }
 }
 
-impl Add for Vec3{
+impl Add for Vec3 {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
