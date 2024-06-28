@@ -39,8 +39,7 @@ fn main() {
         - viewport_u / 2.0
         - viewport_v / 2.0
         - Vec3::new(0.0, 0.0, focal_length);
-    let pixel00_loc =
-        viewport_origin + pixel_delta_u.clone() / 2.0 + pixel_delta_v.clone() / 2.0;
+    let pixel00_loc = viewport_origin + pixel_delta_u.clone() / 2.0 + pixel_delta_v.clone() / 2.0;
 
     //println!("P3\n{} {}\n255", image_width, image_height);
 
