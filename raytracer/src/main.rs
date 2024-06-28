@@ -36,11 +36,11 @@ fn main() {
     let pixel_delta_v = viewport_v.clone() / image_height as f64;
 
     let viewport_origin = camera_center.clone()
-        - viewport_u.clone() / 2.0
-        - viewport_v.clone() / 2.0
+        - viewport_u / 2.0
+        - viewport_v / 2.0
         - Vec3::new(0.0, 0.0, focal_length);
     let pixel00_loc =
-        viewport_origin.clone() + pixel_delta_u.clone() / 2.0 + pixel_delta_v.clone() / 2.0;
+        viewport_origin + pixel_delta_u.clone() / 2.0 + pixel_delta_v.clone() / 2.0;
 
     //println!("P3\n{} {}\n255", image_width, image_height);
 
