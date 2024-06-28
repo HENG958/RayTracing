@@ -1,6 +1,6 @@
 use ::std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -48,12 +48,12 @@ impl Vec3 {
         }
     }
 
-    pub fn unit(&self) -> Self {
+    pub fn unit(&self) -> Vec3 {
         let length = self.length();
         if length == 0.0 {
             panic!("Divided by 0.0!");
         } else {
-            *self / length
+            self.clone() / length
         }
     }
 }
