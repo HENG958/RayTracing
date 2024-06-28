@@ -177,3 +177,5 @@ impl Div<f64> for Vec3 {
         }
     }
 }
+
+pub type Point3 = Vec3;
