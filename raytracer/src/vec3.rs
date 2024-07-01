@@ -98,6 +98,15 @@ impl Vec3 {
             self.clone() / length
         }
     }
+
+    pub fn near_zero(&self) -> bool {
+        const EPSILON: f64 = 1e-8;
+        self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON
+    }
+}
+
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    v.clone() - n.clone() * 2.0 * v.length_squared()
 }
 
 impl Neg for Vec3 {
@@ -177,12 +186,15 @@ impl SubAssign<f64> for Vec3 {
     }
 }
 
-/// Vec3::Mul is dot product.
-impl Mul for Vec3 {
-    type Output = f64;
+impl Mul<&Vec3> for f64 {
+    type Output = Vec3;
 
-    fn mul(self, other: Self) -> f64 {
-        self.x * other.x + self.y * other.y + self.z * other.z
+    fn mul(self, other: &Vec3) -> Vec3 {
+        Vec3 {
+            x: self * other.x,
+            y: self * other.y,
+            z: self * other.z,
+        }
     }
 }
 
@@ -194,6 +206,18 @@ impl Mul<f64> for Vec3 {
             x: self.x * other,
             y: self.y * other,
             z: self.z * other,
+        }
+    }
+}
+
+impl Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: Vec3) -> Self::Output {
+        Vec3 {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
         }
     }
 }
