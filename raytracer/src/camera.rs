@@ -27,7 +27,7 @@ pub struct Camera {
     pub viewport_upper_left: Point3,
     pub pixel100_loc: Point3,
     pub samples_per_pixel: u32,
-    pub max_depth: u32,
+    pub max_depth: i32,
     pub pixel_samples_scale: f64,
 }
 
@@ -37,6 +37,7 @@ impl Camera {
         image_width: u32,
         quality: u8,
         samples_per_pixel: u32,
+        max_depth: i32,
         focal_length: f64,
         viewport_height: f64,
     ) -> Self {
@@ -76,8 +77,8 @@ impl Camera {
             pixel_delta_v,
             viewport_upper_left,
             pixel100_loc,
+            max_depth,
             samples_per_pixel,
-            max_depth: 50,
             pixel_samples_scale,
         }
     }
@@ -94,7 +95,7 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color = pixel_color + ray_color(r, &world);
+                    pixel_color = pixel_color + ray_color(r, self.max_depth, &world);
                 }
                 pixel_color *= self.pixel_samples_scale;
                 let pixel = self.img.get_pixel_mut(i, j);
@@ -118,10 +119,14 @@ impl Camera {
     }
 }
 
-fn ray_color(r: Ray, world: &dyn Hittable) -> Color {
+fn ray_color(r: Ray, depth: i32, world: &dyn Hittable) -> Color {
+    if depth <= 0 {
+        return Color::new(0.0, 0.0, 0.0);
+    }
+
     if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
         let target: Point3 = rec.p.clone() + rec.normal.clone() + Vec3::random_in_unit_sphere();
-        return ray_color(Ray::new(rec.p.clone(), target - rec.p), world) * 0.5;
+        return ray_color(Ray::new(rec.p.clone(), target - rec.p), depth - 1, world) * 0.5;
     }
     let unit_direction = r.direction().unit();
     let t = 0.5 * (unit_direction.y() + 1.0);

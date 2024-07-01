@@ -13,7 +13,7 @@ use ray::Point3;
 use std::rc::Rc;
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image7.jpg");
+    let path = std::path::Path::new("output/book1/image8.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -27,7 +27,7 @@ fn main() {
         100.0,
     )));
 
-    let mut camera = Camera::new(16.0 / 9.0, 400, 100, 10, 1.0, 2.0);
+    let mut camera = Camera::new(16.0 / 9.0, 400, 100, 100, 50, 1.0, 2.0);
     camera.render(world);
 
     println!(
