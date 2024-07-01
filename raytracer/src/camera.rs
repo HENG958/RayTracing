@@ -1,18 +1,19 @@
-use image::{ImageBuffer, RgbImage};
-use indicatif::ProgressBar;
 use crate::color::Color;
-use crate::hittable_list::HittableList;
 use crate::hittable::Hittable;
+use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
+use image::{ImageBuffer, RgbImage};
+use indicatif::ProgressBar;
+use rand::Rng;
 
 pub struct Camera {
     // image
     pub aspect_ratio: f64,
     pub image_width: u32,
     pub image_height: u32,
-    pub quality:u8,
+    pub quality: u8,
     pub img: RgbImage,
     // Camera & Viewport
     pub focal_length: f64,
@@ -25,11 +26,25 @@ pub struct Camera {
     pub pixel_delta_v: Vec3,
     pub viewport_upper_left: Point3,
     pub pixel100_loc: Point3,
+    pub samples_per_pixel: u32,
+    pub max_depth: u32,
+    pub pixel_samples_scale: f64,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u32, quality: u8, focal_length: f64, viewport_height: f64) -> Self {
-        let image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
+    pub fn new(
+        aspect_ratio: f64,
+        image_width: u32,
+        quality: u8,
+        samples_per_pixel: u32,
+        focal_length: f64,
+        viewport_height: f64,
+    ) -> Self {
+        let mut image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
+        if image_height == 0 {
+            image_height = 1;
+        }
+        let pixel_samples_scale: f64 = 1.0 / samples_per_pixel as f64;
         let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
         let camera_center: Point3 = Point3::new(0.0, 0.0, 0.0);
         // edge vector
@@ -61,6 +76,9 @@ impl Camera {
             pixel_delta_v,
             viewport_upper_left,
             pixel100_loc,
+            samples_per_pixel,
+            max_depth: 50,
+            pixel_samples_scale,
         }
     }
 
@@ -73,15 +91,13 @@ impl Camera {
 
         for j in (0..self.image_height).rev() {
             for i in 0..self.image_width {
+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                for _ in 0..self.samples_per_pixel {
+                    let r = self.get_ray(i, j);
+                    pixel_color = pixel_color + ray_color(r, &world);
+                }
+                pixel_color *= self.pixel_samples_scale;
                 let pixel = self.img.get_pixel_mut(i, j);
-
-                let pixel_center: Point3 = self.pixel100_loc.clone()
-                    + self.pixel_delta_u.clone() * i as f64
-                    + self.pixel_delta_v.clone() * j as f64;
-                let ray_direction: Vec3 = pixel_center.clone() - self.camera_center.clone().clone();
-                let r: Ray = Ray::new(self.camera_center.clone(), ray_direction);
-
-                let pixel_color: Color = ray_color(r, &world);
                 *pixel = pixel_color.write_color();
             }
             progress.inc(1);
@@ -89,14 +105,29 @@ impl Camera {
         progress.finish();
         &self.img
     }
+
+    pub fn get_ray(&self, u: u32, v: u32) -> Ray {
+        let offset: Vec3 = sample_square();
+        let u: f64 = (u as f64) + offset.x;
+        let v: f64 = (v as f64) + offset.y;
+        let pixel_center: Point3 = self.pixel100_loc.clone()
+            + (self.pixel_delta_u.clone() * u)
+            + (self.pixel_delta_v.clone() * v);
+        let ray_direction: Vec3 = pixel_center - self.camera_center.clone();
+        Ray::new(self.camera_center.clone(), ray_direction)
+    }
 }
 
-
 fn ray_color(r: Ray, world: &dyn Hittable) -> Color {
-  if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)){
-      return (rec.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
-  }
-  let unit_direction = r.direction().unit();
-  let t = 0.5 * (unit_direction.y() + 1.0);
-  Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+    if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
+        return (rec.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
+    }
+    let unit_direction = r.direction().unit();
+    let t = 0.5 * (unit_direction.y() + 1.0);
+    Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+}
+
+fn sample_square() -> Vec3 {
+    let mut rng = rand::thread_rng();
+    Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0)
 }

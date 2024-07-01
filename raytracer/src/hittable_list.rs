@@ -1,6 +1,6 @@
 use crate::hittable::{HitRecord, Hittable};
-use crate::ray::Ray;
 use crate::interval::Interval;
+use crate::ray::Ray;
 use std::rc::Rc;
 
 pub struct HittableList {

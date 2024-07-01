@@ -3,9 +3,9 @@ pub type Color = Vec3;
 
 impl Color {
     pub fn write_color(&self) -> image::Rgb<u8> {
-        let r = (self.x() * 255.99) as u8;
-        let g = (self.y() * 255.99) as u8;
-        let b = (self.z() * 255.99) as u8;
+        let r: u8 = (256.0 * self.x.sqrt().clamp(0.0, 0.999)) as u8;
+        let g: u8 = (256.0 * self.y.sqrt().clamp(0.0, 0.999)) as u8;
+        let b: u8 = (256.0 * self.z.sqrt().clamp(0.0, 0.999)) as u8;
         image::Rgb([r, g, b])
     }
 }
