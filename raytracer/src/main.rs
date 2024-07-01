@@ -3,37 +3,27 @@ use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::{fs::File, process::exit};
 pub mod color;
+pub mod hittable;
+pub mod hittable_list;
+pub mod sphere;
 pub mod vec3;
 use color::Color;
 pub mod ray;
 use ray::{Point3, Ray};
+use std::rc::Rc;
 use vec3::Vec3;
 
-pub fn hit_sphere(center: &Point3, radius: f64, r: &Ray) -> f64 {
-    let oc = r.origin().clone() - center.clone();
-    let a = r.direction().length_squared();
-    let half_b = oc.dot(r.direction());
-    let c = oc.length_squared() - radius * radius;
-    let discriminant = half_b * half_b - a * c;
-    if discriminant < 0.0 {
-        -1.0
-    } else {
-        (-half_b - discriminant.sqrt()) / a
-    }
-}
-pub fn ray_color(r: &Ray) -> Color {
-    let t = hit_sphere(&Point3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 {
-        let n = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit();
-        return Color::new(n.x() + 1.0, n.y() + 1.0, n.z() + 1.0) * 0.5;
+fn ray_color(r: Ray, world: &dyn hittable::Hittable) -> Color {
+    if let Some(rec) = world.hit(&r, 0.0, f64::INFINITY) {
+        return (rec.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
     }
     let unit_direction = r.direction().unit();
     let t = 0.5 * (unit_direction.y() + 1.0);
-    Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t
+    Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
 }
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image4.jpg");
+    let path = std::path::Path::new("output/book1/image5.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -42,6 +32,19 @@ fn main() {
 
     let image_height = (image_width as f64 / aspect_ratio) as u32;
     //if image_height < 1 {image_height = 1;}
+    let quality = 100;
+    let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
+
+    let mut world = hittable_list::HittableList::new();
+    world.add(Rc::new(sphere::Sphere::new(
+        &Point3::new(0.0, 0.0, -1.0),
+        0.5,
+    )));
+    world.add(Rc::new(sphere::Sphere::new(
+        &Point3::new(0.0, -100.5, -1.0),
+        100.0,
+    )));
+
     let focal_length = 1.0;
     let viewport_height = 2.0;
     let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
@@ -59,18 +62,13 @@ fn main() {
         - Vec3::new(0.0, 0.0, focal_length);
     let pixel00_loc = viewport_origin + pixel_delta_u.clone() / 2.0 + pixel_delta_v.clone() / 2.0;
 
-    //println!("P3\n{} {}\n255", image_width, image_height);
-
-    let quality = 100;
-    let mut img: RgbImage = ImageBuffer::new(image_width, image_height);
-
     let progress = if option_env!("CI").unwrap_or_default() == "true" {
         ProgressBar::hidden()
     } else {
         ProgressBar::new((image_height * image_width) as u64)
     };
 
-    for j in 0..image_height {
+    for j in (0..image_height).rev() {
         for i in 0..image_width {
             let pixel = img.get_pixel_mut(i, j);
             let pixel_center = pixel00_loc.clone()
@@ -81,14 +79,9 @@ fn main() {
                 pixel_center.clone() - camera_center.clone(),
             );
             //println!("{:?}", r.direction());
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(r, &world);
             //println!("{:?}", pixel_color);
             *pixel = pixel_color.write_color();
-            //let pixel = img.get_pixel_mut(i, j)
-            //let r: f64 = (i as f64) / ((width - 1) as f64) * 255.999;
-            //let g: f64 = (j as f64) / ((height - 1) as f64) * 255.999;
-            //let b: f64 = 0.25 * 255.999;
-            //*pixel = write_color(&Vec3::new(r, g, b));
             //*pixel = image::Rgb([r as u8, g as u8, b as u8]);
         }
         progress.inc(1);
