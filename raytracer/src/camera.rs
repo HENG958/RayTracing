@@ -120,7 +120,8 @@ impl Camera {
 
 fn ray_color(r: Ray, world: &dyn Hittable) -> Color {
     if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
-        return (rec.normal + Vec3::new(1.0, 1.0, 1.0)) * 0.5;
+        let target: Point3 = rec.p.clone() + rec.normal.clone() + Vec3::random_in_unit_sphere();
+        return ray_color(Ray::new(rec.p.clone(), target - rec.p), world) * 0.5;
     }
     let unit_direction = r.direction().unit();
     let t = 0.5 * (unit_direction.y() + 1.0);
