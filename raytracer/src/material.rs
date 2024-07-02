@@ -1,7 +1,7 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
-use crate::vec3::{reflect, Vec3};
+use crate::vec3::{reflect, refract, Vec3};
 
 pub trait Material: Send + Sync {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)>;
@@ -60,5 +60,34 @@ impl Material for Metal {
         } else {
             None
         }
+    }
+}
+
+pub struct Dielectric {
+    ir: f64,
+}
+
+impl Dielectric {
+    pub fn new(index_of_refraction: f64) -> Self {
+        Self {
+            ir: index_of_refraction,
+        }
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
+        let refraction_ratio: f64 = if rec.front_face {
+            1.0 / self.ir
+        } else {
+            self.ir
+        };
+
+        let unit_direction: Vec3 = r_in.direction().unit();
+        let refracted: Vec3 = refract(&unit_direction, &rec.normal, refraction_ratio);
+
+        let scattered: Ray = Ray::new(rec.p.clone(), refracted);
+        let attenuation: Color = Color::new(1.0, 1.0, 1.0);
+        Some((scattered, attenuation))
     }
 }

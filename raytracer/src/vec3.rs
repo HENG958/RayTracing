@@ -108,6 +108,12 @@ impl Vec3 {
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
     v.clone() - 2.0 * v.dot(n) * n
 }
+pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+    let cos_theta = f64::min(-uv.dot(n), 1.0);
+    let r_out_perp = (uv.clone() + n.clone() * cos_theta) * etai_over_etat;
+    let r_out_parallel = n.clone() * (-f64::sqrt(f64::abs(1.0 - r_out_perp.length_squared())));
+    r_out_perp + r_out_parallel
+}
 
 impl Neg for Vec3 {
     type Output = Self;
