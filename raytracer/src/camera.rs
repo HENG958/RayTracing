@@ -17,9 +17,12 @@ pub struct Camera {
     pub img: RgbImage,
     // Camera & Viewport
     pub focal_length: f64,
+    pub camera_center: Point3,
+    pub vfov: f64,
+    pub theta: f64,
+    pub h: f64,
     pub viewport_height: f64,
     pub viewport_width: f64,
-    pub camera_center: Point3,
     pub viewport_u: Vec3,
     pub viewport_v: Vec3,
     pub pixel_delta_u: Vec3,
@@ -39,15 +42,19 @@ impl Camera {
         samples_per_pixel: u32,
         max_depth: i32,
         focal_length: f64,
-        viewport_height: f64,
+        vfov: f64,
     ) -> Self {
         let mut image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
         if image_height == 0 {
             image_height = 1;
         }
-        let pixel_samples_scale: f64 = 1.0 / samples_per_pixel as f64;
-        let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
         let camera_center: Point3 = Point3::new(0.0, 0.0, 0.0);
+        let theta: f64 = vfov * std::f64::consts::PI / 180.0;
+        let h: f64 = f64::tan(theta / 2.0);
+
+        let pixel_samples_scale: f64 = 1.0 / samples_per_pixel as f64;
+        let viewport_height: f64 = 2.0 * h * focal_length;
+        let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
         // edge vector
         let viewport_u: Vec3 = Vec3::new(viewport_width, 0.0, 0.0);
         let viewport_v: Vec3 = Vec3::new(0.0, -viewport_height, 0.0);
@@ -71,6 +78,9 @@ impl Camera {
             viewport_height,
             viewport_width,
             camera_center,
+            vfov,
+            theta,
+            h,
             viewport_u,
             viewport_v,
             pixel_delta_u,
