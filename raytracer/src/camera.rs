@@ -3,7 +3,7 @@ use crate::hittable::Hittable;
 use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::ray::Ray;
-use crate::vec3::{Point3, Vec3};
+use crate::vec3::{cross, Point3, Vec3};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use rand::Rng;
@@ -19,6 +19,9 @@ pub struct Camera {
     pub focal_length: f64,
     pub camera_center: Point3,
     pub vfov: f64,
+    pub look_from: Point3,
+    pub look_at: Point3,
+    pub vup: Vec3,
     pub theta: f64,
     pub h: f64,
     pub viewport_height: f64,
@@ -41,14 +44,18 @@ impl Camera {
         quality: u8,
         samples_per_pixel: u32,
         max_depth: i32,
-        focal_length: f64,
         vfov: f64,
+        look_from: Point3,
+        look_at: Point3,
+        vup: Vec3,
     ) -> Self {
         let mut image_height: u32 = (image_width as f64 / aspect_ratio) as u32;
         if image_height == 0 {
             image_height = 1;
         }
-        let camera_center: Point3 = Point3::new(0.0, 0.0, 0.0);
+
+        let camera_center: Point3 = look_from.clone();
+        let focal_length: f64 = (look_from.clone() - look_at.clone()).length();
         let theta: f64 = vfov * std::f64::consts::PI / 180.0;
         let h: f64 = f64::tan(theta / 2.0);
 
@@ -56,14 +63,18 @@ impl Camera {
         let viewport_height: f64 = 2.0 * h * focal_length;
         let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
         // edge vector
-        let viewport_u: Vec3 = Vec3::new(viewport_width, 0.0, 0.0);
-        let viewport_v: Vec3 = Vec3::new(0.0, -viewport_height, 0.0);
+        let w = (look_from.clone() - look_at.clone()).unit();
+        let u = cross(&vup, &w).unit();
+        let v = cross(&w, &u);
+        // viewport
+        let viewport_u: Vec3 = u * viewport_width;
+        let viewport_v: Vec3 = v * -viewport_height;
         // delta vector
         let pixel_delta_u: Vec3 = viewport_u.clone() / image_width as f64;
         let pixel_delta_v: Vec3 = viewport_v.clone() / image_height as f64;
         // upper left
         let viewport_upper_left: Point3 = camera_center.clone()
-            - Vec3::new(0.0, 0.0, focal_length)
+            - w * focal_length
             - viewport_u.clone() / 2.0
             - viewport_v.clone() / 2.0;
         let pixel100_loc: Point3 =
@@ -78,6 +89,9 @@ impl Camera {
             viewport_height,
             viewport_width,
             camera_center,
+            look_from,
+            look_at,
+            vup,
             vfov,
             theta,
             h,

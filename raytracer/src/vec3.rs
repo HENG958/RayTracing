@@ -60,14 +60,6 @@ impl Vec3 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn cross(a: Self, b: Self) -> Self {
-        Self {
-            x: a.y * b.z - a.z * b.y,
-            y: a.z * b.x - a.x * b.z,
-            z: a.x * b.y - a.y * b.x,
-        }
-    }
-
     pub fn random_in_unit_sphere() -> Vec3 {
         loop {
             let p = Vec3::random_in(-1.0, 1.0);
@@ -103,6 +95,14 @@ impl Vec3 {
         const EPSILON: f64 = 1e-8;
         self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON
     }
+}
+
+pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+    Vec3::new(
+        u.y * v.z - u.z * v.y,
+        u.z * v.x - u.x * v.z,
+        u.x * v.y - u.y * v.x,
+    )
 }
 
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
