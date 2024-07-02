@@ -62,12 +62,12 @@ fn main() {
         image_width: 400,
         quality: 100,
         samples_per_pixel: 100,
-        max_depth: 50,
+        max_depth: 10,
     };
 
     let camera_setting = camera::CameraConfig {
-        vfov: 20.0,
-        look_from: Point3::new(0.0, 0.0, 0.0),
+        vfov: 90.0,
+        look_from: Point3::new(-2.0, 2.0, 1.0),
         look_at: Point3::new(0.0, 0.0, -1.0),
         vup: Vec3::new(0.0, 1.0, 0.0),
     };
