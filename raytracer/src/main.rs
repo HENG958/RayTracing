@@ -10,9 +10,9 @@ pub mod ray;
 pub mod sphere;
 pub mod vec3;
 use camera::Camera;
+use material::Dielectric;
 use ray::Point3;
 use std::sync::Arc;
-use material::Dielectric;
 
 fn main() {
     let path = std::path::Path::new("output/book1/image16.jpg");
@@ -22,7 +22,7 @@ fn main() {
     let material_ground = Arc::new(material::Lambertian::new(&color::Color::new(0.8, 0.8, 0.0)));
     let material_center = Arc::new(material::Lambertian::new(&color::Color::new(0.1, 0.2, 0.5)));
     //let material_left = Arc::new(material::Metal::new(&color::Color::new(0.8, 0.8, 0.8), 0.3));
-    
+
     let material_left = Arc::new(Dielectric::new(1.50));
     let material_right = Arc::new(material::Metal::new(&color::Color::new(0.8, 0.6, 0.2), 1.0));
 
