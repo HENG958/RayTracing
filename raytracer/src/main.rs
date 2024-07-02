@@ -14,14 +14,14 @@ use ray::Point3;
 use std::sync::Arc;
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image13.jpg");
+    let path = std::path::Path::new("output/book1/image14.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
     let material_ground = Arc::new(material::Lambertian::new(&color::Color::new(0.8, 0.8, 0.0)));
     let material_center = Arc::new(material::Lambertian::new(&color::Color::new(0.1, 0.2, 0.5)));
-    let material_left = Arc::new(material::Metal::new(&color::Color::new(0.8, 0.8, 0.8)));
-    let material_right = Arc::new(material::Metal::new(&color::Color::new(0.8, 0.6, 0.2)));
+    let material_left = Arc::new(material::Metal::new(&color::Color::new(0.8, 0.8, 0.8), 0.3));
+    let material_right = Arc::new(material::Metal::new(&color::Color::new(0.8, 0.6, 0.2), 1.0));
 
     let mut world = hittable_list::HittableList::new();
     world.add(Arc::new(sphere::Sphere::new(
