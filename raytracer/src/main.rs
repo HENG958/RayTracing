@@ -57,10 +57,22 @@ fn main() {
         material_right,
     )));
 
-    let look_from = Point3::new(-2.0, 2.0, 1.0);
-    let look_at = Point3::new(0.0, 0.0, -1.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
-    let mut camera = Camera::new(16.0 / 9.0, 400, 100, 100, 50, 90.0, look_from, look_at, vup);
+    let image_setting = camera::ImageConfig {
+        aspect_ratio: 16.0 / 9.0,
+        image_width: 400,
+        quality: 100,
+        samples_per_pixel: 100,
+        max_depth: 50,
+    };
+
+    let camera_setting = camera::CameraConfig {
+        vfov: 20.0,
+        look_from: Point3::new(0.0, 0.0, 0.0),
+        look_at: Point3::new(0.0, 0.0, -1.0),
+        vup: Vec3::new(0.0, 1.0, 0.0),
+    };
+
+    let mut camera = Camera::new(image_setting, camera_setting);
     camera.render(world);
 
     println!(
