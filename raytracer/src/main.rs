@@ -16,7 +16,7 @@ use vec3::Point3;
 use vec3::Vec3;
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image21.jpg");
+    let path = std::path::Path::new("output/book1/image22.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -70,6 +70,8 @@ fn main() {
         look_from: Point3::new(-2.0, 2.0, 1.0),
         look_at: Point3::new(0.0, 0.0, -1.0),
         vup: Vec3::new(0.0, 1.0, 0.0),
+        defocus_angle: 10.0,
+        focus_distance: 3.4,
     };
 
     let mut camera = Camera::new(image_setting, camera_setting);
