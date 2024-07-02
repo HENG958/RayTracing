@@ -106,7 +106,7 @@ impl Vec3 {
 }
 
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-    v.clone() - n.clone() * 2.0 * v.length_squared()
+    v.clone() - 2.0 * v.dot(n) * n
 }
 
 impl Neg for Vec3 {

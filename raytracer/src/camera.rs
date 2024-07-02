@@ -120,7 +120,7 @@ impl Camera {
 }
 
 fn ray_color(r: Ray, depth: i32, world: &dyn Hittable) -> Color {
-    if depth <= 0 {
+    if depth < 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
