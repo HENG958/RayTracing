@@ -19,11 +19,11 @@ use vec3::Point3;
 use vec3::Vec3;
 
 fn main() {
-    let path = std::path::Path::new("output/book1/image23.jpg");
+    let path = std::path::Path::new("output/book2/image1.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
-    let material_ground = Arc::new(Lambertian::new(&color::Color::new(0.8, 0.8, 0.0)));
+    let material_ground = Arc::new(Lambertian::new(&color::Color::new(0.5, 0.5, 0.5)));
     let material1 = Arc::new(Dielectric::new(1.5));
     let material2 = Arc::new(Lambertian::new(&color::Color::new(0.4, 0.2, 0.1)));
     let material3 = Arc::new(Metal::new(&color::Color::new(0.7, 0.6, 0.5), 0.0));
@@ -74,16 +74,27 @@ fn main() {
                 } else {
                     Arc::new(Dielectric::new(1.5))
                 };
-                world.add(Arc::new(Sphere::new(&center, 0.2, sphere_material)));
+
+                if choose_mat < 0.8 {
+                    let center2 = center.clone() + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                    world.add(Arc::new(Sphere::new_moving(
+                        &center,
+                        0.2,
+                        sphere_material,
+                        &center2,
+                    )));
+                } else {
+                    world.add(Arc::new(sphere::Sphere::new(&center, 0.2, sphere_material)));
+                }
             }
         }
     }
 
     let image_setting = camera::ImageConfig {
         aspect_ratio: 16.0 / 9.0,
-        image_width: 1200,
+        image_width: 400,
         quality: 100,
-        samples_per_pixel: 500,
+        samples_per_pixel: 100,
         max_depth: 50,
     };
 

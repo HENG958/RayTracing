@@ -6,7 +6,7 @@ use crate::ray::Ray;
 use crate::vec3::{cross, random_in_unit_disk, Point3, Vec3};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
-use rand::Rng;
+use rand::{thread_rng, Rng};
 
 pub struct ImageConfig {
     pub aspect_ratio: f64,
@@ -175,7 +175,8 @@ impl Camera {
             self.defocus_disk_sample()
         };
         let ray_direction = pixel_center - ray_origin.clone();
-        Ray::new(ray_origin, ray_direction)
+        let ray_time = thread_rng().gen_range(0.0..1.0);
+        Ray::new(ray_origin, ray_direction, ray_time)
     }
 
     fn defocus_disk_sample(&self) -> Point3 {
