@@ -3,7 +3,7 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::hittable_list::HittableList;
 use crate::interval::Interval;
 use crate::ray::Ray;
-use rand::{thread_rng, Rng};
+//use rand::{thread_rng, Rng};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -43,23 +43,24 @@ impl BvhNode {
         Self::new(&mut list.objects, 0, len)
     }
     pub fn new(objects: &mut Vec<Arc<dyn Hittable>>, start: usize, end: usize) -> Self {
-        let axis = thread_rng().gen_range(0..3);
+        let mut bbox = AABB::zero();
+        for object in objects.iter().take(end).skip(start) {
+            bbox = AABB::two_aabb(&bbox, &object.bounding_box());
+        }
+        let axis = bbox.longest_axis();
         let object_span = end - start;
 
         if object_span == 1 {
             Self {
                 left: objects[start].clone(),
                 right: objects[start].clone(),
-                bbox: objects[start].bounding_box(),
+                bbox,
             }
         } else if object_span == 2 {
             Self {
                 left: objects[start].clone(),
                 right: objects[start + 1].clone(),
-                bbox: AABB::two_aabb(
-                    &objects[start].bounding_box(),
-                    &objects[start + 1].bounding_box(),
-                ),
+                bbox,
             }
         } else {
             if axis == 0 {
@@ -69,14 +70,13 @@ impl BvhNode {
             } else {
                 objects[start..end - 1].sort_unstable_by(|a, b| box_z_compare(a, b))
             };
-            objects[start..end].sort_by(|a, b| box_compare(a, b, axis));
             let mid = start + object_span / 2;
             let left = BvhNode::new(objects, start, mid);
             let right = BvhNode::new(objects, mid, end);
             Self {
-                left: Arc::new(left.clone()),
-                right: Arc::new(right.clone()),
-                bbox: AABB::two_aabb(&left.bounding_box(), &right.bounding_box()),
+                left: Arc::new(left),
+                right: Arc::new(right),
+                bbox,
             }
         }
     }

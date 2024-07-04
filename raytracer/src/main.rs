@@ -10,6 +10,7 @@ pub mod interval;
 pub mod material;
 pub mod ray;
 pub mod sphere;
+pub mod texture;
 pub mod vec3;
 use bvh::BvhNode;
 use camera::Camera;
@@ -18,15 +19,22 @@ use material::{Dielectric, Lambertian, Material, Metal};
 use rand::Rng;
 use sphere::Sphere;
 use std::sync::Arc;
+use texture::{CheckerTexture, SolidColor};
 use vec3::Point3;
 use vec3::Vec3;
 
 fn main() {
-    let path = std::path::Path::new("output/book2/image1.jpg");
+    let path = std::path::Path::new("output/book2/image2.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
-    let material_ground = Arc::new(Lambertian::new(&color::Color::new(0.5, 0.5, 0.5)));
+    let checker = Arc::new(CheckerTexture::new(
+        0.32,
+        Arc::new(SolidColor::new(&color::Color::new(0.2, 0.3, 0.1))),
+        Arc::new(SolidColor::new(&color::Color::new(0.9, 0.9, 0.9))),
+    ));
+
+    let material_ground = Arc::new(Lambertian::new_texture(checker));
     let material1 = Arc::new(Dielectric::new(1.5));
     let material2 = Arc::new(Lambertian::new(&color::Color::new(0.4, 0.2, 0.1)));
     let material3 = Arc::new(Metal::new(&color::Color::new(0.7, 0.6, 0.5), 0.0));
@@ -96,7 +104,7 @@ fn main() {
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
     let image_setting = camera::ImageConfig {
         aspect_ratio: 16.0 / 9.0,
-        image_width: 1200,
+        image_width: 400,
         quality: 100,
         samples_per_pixel: 100,
         max_depth: 50,

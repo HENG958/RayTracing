@@ -92,4 +92,21 @@ impl AABB {
         }
         true
     }
+
+    pub fn longest_axis(&self) -> u32 {
+        let size_x = self.x.size();
+        let size_y = self.y.size();
+        let size_z = self.z.size();
+        if size_x > size_y {
+            if size_x > size_z {
+                0
+            } else {
+                2
+            }
+        } else if size_y > size_z {
+            1
+        } else {
+            2
+        }
+    }
 }
