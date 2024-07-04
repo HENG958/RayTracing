@@ -1,5 +1,7 @@
 use console::style;
 use std::{fs::File, process::exit};
+pub mod aabb;
+pub mod bvh;
 pub mod camera;
 pub mod color;
 pub mod hittable;
@@ -9,6 +11,7 @@ pub mod material;
 pub mod ray;
 pub mod sphere;
 pub mod vec3;
+use bvh::BvhNode;
 use camera::Camera;
 use color::Color;
 use material::{Dielectric, Lambertian, Material, Metal};
@@ -90,9 +93,10 @@ fn main() {
         }
     }
 
+    let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
     let image_setting = camera::ImageConfig {
         aspect_ratio: 16.0 / 9.0,
-        image_width: 400,
+        image_width: 1200,
         quality: 100,
         samples_per_pixel: 100,
         max_depth: 50,

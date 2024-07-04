@@ -1,4 +1,4 @@
-use ::std::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
+use ::std::ops::{Add, AddAssign, Div, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand::Rng;
 #[derive(Clone, Debug)]
 pub struct Vec3 {
@@ -256,6 +256,18 @@ impl Div<f64> for Vec3 {
             x: self.x / other,
             y: self.y / other,
             z: self.z / other,
+        }
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: usize) -> &f64 {
+        match index {
+            0 => &self.x,
+            1 => &self.y,
+            2 => &self.z,
+            _ => panic!("Index out of range"),
         }
     }
 }
