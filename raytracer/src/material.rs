@@ -40,7 +40,7 @@ impl Material for Lambertian {
             scatter_direction = rec.normal.clone();
         }
         let scattered: Ray = Ray::new(rec.p.clone(), scatter_direction, r_in.time());
-        let attenuation: Color = self.texture.value(rec.normal.x, rec.normal.y, &rec.p);
+        let attenuation: Color = self.texture.value(rec.u, rec.v, &rec.p);
         Some((scattered, attenuation))
     }
 }

@@ -4,6 +4,7 @@ use crate::interval::Interval;
 use crate::ray::Ray;
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct HittableList {
     pub objects: Vec<Arc<dyn Hittable>>,
     bbox: AABB,

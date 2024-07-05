@@ -18,15 +18,15 @@ use bvh::BvhNode;
 use camera::Camera;
 use color::Color;
 use material::{Dielectric, Lambertian, Material, Metal};
-use rand::Rng;
+use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use std::sync::Arc;
 use texture::{CheckerTexture, SolidColor};
 use vec3::Point3;
 use vec3::Vec3;
 
-fn _bouncing_sphere() {
-    let path = std::path::Path::new("output/book2/image2.jpg");
+fn bouncing_sphere() {
+    let path = std::path::Path::new("output/book2/imagetest.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -106,7 +106,7 @@ fn _bouncing_sphere() {
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
     let image_setting = camera::ImageConfig {
         aspect_ratio: 16.0 / 9.0,
-        image_width: 400,
+        image_width: 1200,
         quality: 100,
         samples_per_pixel: 100,
         max_depth: 50,
@@ -141,6 +141,9 @@ fn _bouncing_sphere() {
     exit(0);
 }
 fn main() {
+    if thread_rng().gen_range(0.0..1.0) < 0.9999999 {
+        bouncing_sphere();
+    }
     let path = std::path::Path::new("output/book2/image3.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
