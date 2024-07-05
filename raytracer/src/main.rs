@@ -1,3 +1,5 @@
+use camera::CameraConfig;
+use camera::ImageConfig;
 use console::style;
 use std::{fs::File, process::exit};
 pub mod aabb;
@@ -23,7 +25,7 @@ use texture::{CheckerTexture, SolidColor};
 use vec3::Point3;
 use vec3::Vec3;
 
-fn main() {
+fn _bouncing_sphere() {
     let path = std::path::Path::new("output/book2/image2.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
@@ -88,7 +90,7 @@ fn main() {
 
                 if choose_mat < 0.8 {
                     let center2 = center.clone() + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
-                    world.add(Arc::new(Sphere::new_moving(
+                    world.add(Arc::new(Sphere::_new_moving(
                         &center,
                         0.2,
                         sphere_material,
@@ -124,6 +126,66 @@ fn main() {
 
     println!(
         "Ouput image as \"{}\"",
+        style(path.to_str().unwrap()).yellow()
+    );
+    let output_image = image::DynamicImage::ImageRgb8(camera.img);
+    let mut output_file = File::create(path).unwrap();
+    match output_image.write_to(
+        &mut output_file,
+        image::ImageOutputFormat::Jpeg(camera.quality),
+    ) {
+        Ok(_) => {}
+        Err(_) => println!("{}", style("Outputting image fails.").red()),
+    }
+
+    exit(0);
+}
+fn main() {
+    let path = std::path::Path::new("output/book2/image3.jpg");
+    let prefix = path.parent().unwrap();
+    std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
+
+    let mut world = hittable_list::HittableList::new();
+    let checker = Arc::new(CheckerTexture::new(
+        0.32,
+        Arc::new(SolidColor::new(&Color::new(0.2, 0.3, 0.1))),
+        Arc::new(SolidColor::new(&Color::new(0.9, 0.9, 0.9))),
+    ));
+    let material_ground = Arc::new(Lambertian::new_texture(checker));
+    world.add(Arc::new(Sphere::new(
+        &Point3::new(0.0, -10.0, 0.0),
+        10.0,
+        material_ground.clone(),
+    )));
+    world.add(Arc::new(Sphere::new(
+        &Point3::new(0.0, 10.0, 0.0),
+        10.0,
+        material_ground,
+    )));
+    let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
+
+    let image_settings = ImageConfig {
+        aspect_ratio: 16.0 / 9.0,
+        image_width: 400,
+        quality: 100,
+        samples_per_pixel: 100,
+        max_depth: 50,
+    };
+
+    let camera_settings = CameraConfig {
+        vfov: 20.0,
+        look_from: Point3::new(13.0, 2.0, 3.0),
+        look_at: Point3::new(0.0, 0.0, 0.0),
+        vup: Vec3::new(0.0, 1.0, 0.0),
+        defocus_angle: 0.0,
+        focus_distance: 10.0,
+    };
+
+    let mut camera = Camera::new(image_settings, camera_settings);
+    camera.render(world);
+
+    println!(
+        "Output image as \"{}\"",
         style(path.to_str().unwrap()).yellow()
     );
     let output_image = image::DynamicImage::ImageRgb8(camera.img);
