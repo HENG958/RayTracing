@@ -16,6 +16,7 @@ pub struct ImageConfig {
     pub quality: u8,
     pub samples_per_pixel: u32,
     pub max_depth: i32,
+    pub background: Color,
 }
 
 pub struct CameraConfig {
@@ -52,6 +53,7 @@ pub struct Camera {
     pub pixel100_loc: Point3,
     pub samples_per_pixel: u32,
     pub max_depth: i32,
+    pub background: Color,
     pub pixel_samples_scale: f64,
     pub defocus_angle: f64,
     pub focus_distance: f64,
@@ -67,6 +69,7 @@ impl Camera {
             quality,
             samples_per_pixel,
             max_depth,
+            background,
         } = image_setting;
         let CameraConfig {
             vfov,
@@ -128,6 +131,7 @@ impl Camera {
             viewport_upper_left,
             pixel100_loc,
             max_depth,
+            background,
             samples_per_pixel,
             pixel_samples_scale,
             defocus_angle,
@@ -165,7 +169,8 @@ impl Camera {
 
                     for _sample in 0..copy.samples_per_pixel {
                         let r = copy.get_ray(i, j);
-                        pixel_color = pixel_color + ray_color(r, copy.max_depth, &world);
+                        pixel_color =
+                            pixel_color + ray_color(r, copy.max_depth, &world, &copy.background);
                     }
                     pixel_color *= copy.pixel_samples_scale;
 
@@ -225,20 +230,19 @@ impl Camera {
     }
 }
 
-fn ray_color(r: Ray, depth: i32, world: &dyn Hittable) -> Color {
+fn ray_color(r: Ray, depth: i32, world: &dyn Hittable, background: &Color) -> Color {
     if depth < 0 {
         return Color::new(0.0, 0.0, 0.0);
     }
 
     if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
         if let Some((scattered, attenuation)) = rec.mat.scatter(&r, &rec) {
-            return attenuation * ray_color(scattered, depth - 1, world);
+            return attenuation * ray_color(scattered, depth - 1, world, background);
+        } else {
+            return rec.mat.emitted(rec.u, rec.v, &rec.p);
         }
-        return Color::new(0.0, 0.0, 0.0);
     }
-    let unit_direction = r.direction().unit();
-    let t = 0.5 * (unit_direction.y() + 1.0);
-    Vec3::new(1.0, 1.0, 1.0) * (1.0 - t) + Vec3::new(0.5, 0.7, 1.0) * t
+    *background
 }
 
 fn sample_square() -> Vec3 {

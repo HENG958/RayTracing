@@ -2,11 +2,16 @@ use crate::color::Color;
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
 use crate::texture::{SolidColor, Texture};
-use crate::vec3::{reflect, refract, Vec3};
+use crate::vec3::{reflect, refract, Point3, Vec3};
 use std::sync::Arc;
 
 pub trait Material: Send + Sync {
-    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)>;
+    fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
+        Color::new(0.0, 0.0, 0.0)
+    }
+    fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color)> {
+        None
+    }
 }
 
 #[derive(Clone)]
@@ -117,5 +122,31 @@ impl Material for Dielectric {
         let scattered: Ray = Ray::new(rec.p, direction, r_in.time());
         let attenuation: Color = Color::new(1.0, 1.0, 1.0);
         Some((scattered, attenuation))
+    }
+}
+
+#[derive(Clone)]
+pub struct DiffuseLight {
+    tex: Arc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(emit: &Color) -> Self {
+        Self {
+            tex: Arc::new(SolidColor::new(emit)),
+        }
+    }
+    pub fn _new_tex(tex: Arc<dyn Texture>) -> Self {
+        Self { tex }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
+        self.tex.value(u, v, p)
+    }
+
+    fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color)> {
+        None
     }
 }
