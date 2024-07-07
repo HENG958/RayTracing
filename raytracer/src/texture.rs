@@ -18,9 +18,7 @@ pub struct SolidColor {
 
 impl SolidColor {
     pub fn new(c: &Color) -> Self {
-        Self {
-            color_value: c.clone(),
-        }
+        Self { color_value: *c }
     }
 
     pub fn new_rgb(r: f64, g: f64, b: f64) -> Self {
@@ -32,7 +30,7 @@ impl SolidColor {
 
 impl Texture for SolidColor {
     fn value(&self, _u: f64, _v: f64, _p: &Vec3) -> Color {
-        self.color_value.clone()
+        self.color_value
     }
 }
 
@@ -135,6 +133,6 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f64, _v: f64, p: &Vec3) -> Color {
-        Color::new(1.0, 1.0, 1.0) * self.noise.noise(&(self.scale * p))
+        Color::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + self.noise.noise(&(self.scale * p)))
     }
 }

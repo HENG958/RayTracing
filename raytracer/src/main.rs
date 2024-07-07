@@ -78,7 +78,7 @@ fn bouncing_sphere() {
                 b as f64 + 0.9 * rng.gen_range(0.0..1.0),
             );
 
-            if (center.clone() - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
+            if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 let sphere_material: Arc<dyn Material> = if choose_mat < 0.8 {
                     let albedo = Color::random() * Color::random();
                     Arc::new(Lambertian::new(&albedo))
@@ -91,7 +91,7 @@ fn bouncing_sphere() {
                 };
 
                 if choose_mat < 0.8 {
-                    let center2 = center.clone() + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
+                    let center2 = center + Vec3::new(0.0, rng.gen_range(0.0..0.5), 0.0);
                     world.add(Arc::new(Sphere::_new_moving(
                         &center,
                         0.2,
@@ -201,7 +201,7 @@ fn main() {
     if thread_rng().gen_range(0.0..1.0) < 0.0000001 {
         bouncing_sphere();
     }
-    let path = std::path::Path::new("output/book2/image12.jpg");
+    let path = std::path::Path::new("output/book2/image13.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 

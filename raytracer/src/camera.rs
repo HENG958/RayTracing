@@ -81,7 +81,7 @@ impl Camera {
             image_height = 1;
         }
 
-        let camera_center: Point3 = look_from.clone();
+        let camera_center: Point3 = look_from;
         let theta: f64 = vfov * std::f64::consts::PI / 180.0;
         let h: f64 = f64::tan(theta / 2.0);
 
@@ -89,22 +89,19 @@ impl Camera {
         let viewport_height: f64 = 2.0 * h * focus_distance;
         let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
         // edge vector
-        let w = (look_from.clone() - look_at.clone()).unit();
+        let w = (look_from - look_at).unit();
         let u = cross(&vup, &w).unit();
         let v = cross(&w, &u);
         // viewport
-        let viewport_u: Vec3 = u.clone() * viewport_width;
-        let viewport_v: Vec3 = v.clone() * -viewport_height;
+        let viewport_u: Vec3 = u * viewport_width;
+        let viewport_v: Vec3 = v * -viewport_height;
         // delta vector
-        let pixel_delta_u: Vec3 = viewport_u.clone() / image_width as f64;
-        let pixel_delta_v: Vec3 = viewport_v.clone() / image_height as f64;
+        let pixel_delta_u: Vec3 = viewport_u / image_width as f64;
+        let pixel_delta_v: Vec3 = viewport_v / image_height as f64;
         // upper left
-        let viewport_upper_left: Point3 = camera_center.clone()
-            - w * focus_distance
-            - viewport_u.clone() / 2.0
-            - viewport_v.clone() / 2.0;
-        let pixel100_loc: Point3 =
-            viewport_upper_left.clone() + (pixel_delta_u.clone() + pixel_delta_v.clone()) * 0.5;
+        let viewport_upper_left: Point3 =
+            camera_center - w * focus_distance - viewport_u / 2.0 - viewport_v / 2.0;
+        let pixel100_loc: Point3 = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
         let defocus_radius =
             focus_distance * f64::tan(defocus_angle / 2.0 * std::f64::consts::PI / 180.0);
         let defocus_disk_u = u * defocus_radius;
@@ -210,24 +207,21 @@ impl Camera {
         let offset: Vec3 = sample_square();
         let u: f64 = (u as f64) + offset.x;
         let v: f64 = (v as f64) + offset.y;
-        let pixel_center: Point3 = self.pixel100_loc.clone()
-            + (self.pixel_delta_u.clone() * u)
-            + (self.pixel_delta_v.clone() * v);
+        let pixel_center: Point3 =
+            self.pixel100_loc + (self.pixel_delta_u * u) + (self.pixel_delta_v * v);
         let ray_origin = if self.defocus_angle <= 0.0 {
-            self.camera_center.clone()
+            self.camera_center
         } else {
             self.defocus_disk_sample()
         };
-        let ray_direction = pixel_center - ray_origin.clone();
+        let ray_direction = pixel_center - ray_origin;
         let ray_time = thread_rng().gen_range(0.0..1.0);
         Ray::new(ray_origin, ray_direction, ray_time)
     }
 
     fn defocus_disk_sample(&self) -> Point3 {
         let p = random_in_unit_disk();
-        self.camera_center.clone()
-            + (self.defocus_disk_u.clone() * p.x)
-            + (self.defocus_disk_v.clone() * p.y)
+        self.camera_center + (self.defocus_disk_u * p.x) + (self.defocus_disk_v * p.y)
     }
 }
 

@@ -27,12 +27,12 @@ impl HitRecord {
         v: f64,
     ) -> Self {
         let front_face: bool = r.direction().dot(outward_normal) < 0.0;
-        let mut normal: Vec3 = outward_normal.clone();
+        let mut normal: Vec3 = *outward_normal;
         if !front_face {
             normal = -normal;
         }
         Self {
-            p: p.clone(),
+            p: *p,
             normal,
             mat,
             t,

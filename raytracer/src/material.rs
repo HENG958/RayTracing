@@ -34,12 +34,12 @@ impl Lambertian {
 
 impl Material for Lambertian {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
-        let mut scatter_direction: Vec3 = rec.normal.clone() + Vec3::random_unit_vector();
+        let mut scatter_direction: Vec3 = rec.normal + Vec3::random_unit_vector();
 
         if scatter_direction.near_zero() {
-            scatter_direction = rec.normal.clone();
+            scatter_direction = rec.normal;
         }
-        let scattered: Ray = Ray::new(rec.p.clone(), scatter_direction, r_in.time());
+        let scattered: Ray = Ray::new(rec.p, scatter_direction, r_in.time());
         let attenuation: Color = self.texture.value(rec.u, rec.v, &rec.p);
         Some((scattered, attenuation))
     }
@@ -54,10 +54,7 @@ pub struct Metal {
 impl Metal {
     pub fn new(a: &Color, f: f64) -> Self {
         let fuzz: f64 = if f < 1.0 { f } else { 1.0 };
-        Self {
-            albedo: a.clone(),
-            fuzz,
-        }
+        Self { albedo: *a, fuzz }
     }
 }
 
@@ -65,11 +62,11 @@ impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
         let reflected: Vec3 = reflect(&r_in.direction().unit(), &rec.normal);
         let scattered: Ray = Ray::new(
-            rec.p.clone(),
+            rec.p,
             reflected + Vec3::random_in_unit_sphere() * self.fuzz,
             r_in.time(),
         );
-        let attenuation: Color = self.albedo.clone();
+        let attenuation: Color = self.albedo;
         if scattered.direction().dot(&rec.normal) > 0.0 {
             Some((scattered, attenuation))
         } else {
@@ -105,7 +102,7 @@ impl Material for Dielectric {
         };
 
         let unit_direction: Vec3 = r_in.direction().unit();
-        let cos_theta: f64 = (-unit_direction.clone()).dot(&rec.normal).min(1.0);
+        let cos_theta: f64 = (-unit_direction).dot(&rec.normal).min(1.0);
         let sin_theta: f64 = f64::sqrt(1.0 - cos_theta * cos_theta);
 
         let cannot_refract: bool = refraction_ratio * sin_theta > 1.0;
@@ -117,7 +114,7 @@ impl Material for Dielectric {
             refract(&unit_direction, &rec.normal, refraction_ratio)
         };
 
-        let scattered: Ray = Ray::new(rec.p.clone(), direction, r_in.time());
+        let scattered: Ray = Ray::new(rec.p, direction, r_in.time());
         let attenuation: Color = Color::new(1.0, 1.0, 1.0);
         Some((scattered, attenuation))
     }

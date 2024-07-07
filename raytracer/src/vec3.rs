@@ -1,6 +1,6 @@
 use ::std::ops::{Add, AddAssign, Div, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 use rand::Rng;
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -87,7 +87,7 @@ impl Vec3 {
         if length == 0.0 {
             panic!("Divided by 0.0!");
         } else {
-            self.clone() / length
+            *self / length
         }
     }
 
@@ -116,12 +116,12 @@ pub fn random_in_unit_disk() -> Vec3 {
 }
 
 pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
-    v.clone() - 2.0 * v.dot(n) * n
+    *v - 2.0 * v.dot(n) * n
 }
 pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
     let cos_theta = f64::min(-uv.dot(n), 1.0);
-    let r_out_perp = (uv.clone() + n.clone() * cos_theta) * etai_over_etat;
-    let r_out_parallel = n.clone() * (-f64::sqrt(f64::abs(1.0 - r_out_perp.length_squared())));
+    let r_out_perp = (*uv + *n * cos_theta) * etai_over_etat;
+    let r_out_parallel = *n * (-f64::sqrt(f64::abs(1.0 - r_out_perp.length_squared())));
     r_out_perp + r_out_parallel
 }
 

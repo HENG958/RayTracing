@@ -25,7 +25,7 @@ impl Ray {
     }
 
     pub fn at(&self, t: f64) -> Point3 {
-        self.orig.clone() + self.dir.clone() * t
+        self.orig + self.dir * t
     }
 
     pub fn time(&self) -> f64 {
