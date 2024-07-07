@@ -92,8 +92,8 @@ impl Hittable for Sphere {
         let p: Point3 = r.at(t);
         let outward_normal: Vec3 = (p.clone() - self.center.clone()) / self.radius;
 
-        let theta = f64::acos(-p.y);
-        let phi = f64::atan2(-p.z, p.x) + std::f64::consts::PI;
+        let theta = f64::acos(-outward_normal.y);
+        let phi = f64::atan2(-outward_normal.z, outward_normal.x) + std::f64::consts::PI;
         let u = phi / (2.0 * std::f64::consts::PI);
         let v = theta / std::f64::consts::PI;
         let rec: HitRecord = HitRecord::new(&p, t, &outward_normal, r, self.mat.clone(), u, v);

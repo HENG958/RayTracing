@@ -11,6 +11,7 @@ pub mod hittable_list;
 pub mod interval;
 pub mod material;
 pub mod ray;
+pub mod rtw_stb_image;
 pub mod sphere;
 pub mod texture;
 pub mod vec3;
@@ -21,7 +22,7 @@ use material::{Dielectric, Lambertian, Material, Metal};
 use rand::{thread_rng, Rng};
 use sphere::Sphere;
 use std::sync::Arc;
-use texture::{CheckerTexture, SolidColor};
+use texture::{CheckerTexture, ImageTexture, SolidColor};
 use vec3::Point3;
 use vec3::Vec3;
 
@@ -141,29 +142,21 @@ fn bouncing_sphere() {
     exit(0);
 }
 fn main() {
-    if thread_rng().gen_range(0.0..1.0) < 0.9999999 {
+    if thread_rng().gen_range(0.0..1.0) < 0.0000001 {
         bouncing_sphere();
     }
-    let path = std::path::Path::new("output/book2/image3.jpg");
+    let path = std::path::Path::new("output/book2/image5.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
+    let earth_texture = Arc::new(ImageTexture::new("earthmap.jpg"));
+    let earth_surface = Arc::new(Lambertian::new_texture(earth_texture));
+
     let mut world = hittable_list::HittableList::new();
-    let checker = Arc::new(CheckerTexture::new(
-        0.32,
-        Arc::new(SolidColor::new(&Color::new(0.2, 0.3, 0.1))),
-        Arc::new(SolidColor::new(&Color::new(0.9, 0.9, 0.9))),
-    ));
-    let material_ground = Arc::new(Lambertian::new_texture(checker));
     world.add(Arc::new(Sphere::new(
-        &Point3::new(0.0, -10.0, 0.0),
-        10.0,
-        material_ground.clone(),
-    )));
-    world.add(Arc::new(Sphere::new(
-        &Point3::new(0.0, 10.0, 0.0),
-        10.0,
-        material_ground,
+        &Point3::new(0.0, 0.0, 0.0),
+        2.0,
+        earth_surface,
     )));
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
 
@@ -177,7 +170,7 @@ fn main() {
 
     let camera_settings = CameraConfig {
         vfov: 20.0,
-        look_from: Point3::new(13.0, 2.0, 3.0),
+        look_from: Point3::new(0.0, 0.0, 12.0),
         look_at: Point3::new(0.0, 0.0, 0.0),
         vup: Vec3::new(0.0, 1.0, 0.0),
         defocus_angle: 0.0,
