@@ -119,20 +119,22 @@ fn gamma_to_linear(linear: f64) -> f64 {
 
 pub struct NoiseTexture {
     noise: Perlin,
-    _scale: f64,
+    scale: f64,
 }
 
 impl NoiseTexture {
-    pub fn new(_scale: f64) -> Self {
+    pub fn new(scale: f64) -> Self {
         Self {
             noise: Perlin::new(),
-            _scale,
+            scale,
         }
     }
 }
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f64, _v: f64, p: &Vec3) -> Color {
-        Color::new(1.0, 1.0, 1.0) * self.noise.turb(p, 7)
+        Color::new(1.0, 1.0, 1.0)
+            * 0.5
+            * (1.0 + (self.scale * p.z + 10.0 * self.noise.turb(p, 7)).sin())
     }
 }
