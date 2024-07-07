@@ -1,4 +1,5 @@
 use crate::interval::Interval;
+use crate::perlin::Perlin;
 use crate::rtw_stb_image::RTWImage;
 use crate::{
     color::Color,
@@ -115,5 +116,29 @@ fn gamma_to_linear(linear: f64) -> f64 {
         linear * linear
     } else {
         0.0
+    }
+}
+
+pub struct NoiseTexture {
+    noise: Perlin,
+}
+
+impl Default for NoiseTexture {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NoiseTexture {
+    pub fn new() -> Self {
+        Self {
+            noise: Perlin::new(),
+        }
+    }
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, _u: f64, _v: f64, p: &Vec3) -> Color {
+        Color::new(1.0, 1.0, 1.0) * self.noise.noise(p)
     }
 }
