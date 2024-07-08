@@ -29,7 +29,7 @@ impl Sphere {
         }
     }
 
-    pub(crate) fn _new_moving(
+    pub(crate) fn new_moving(
         center: &Point3,
         radius: f64,
         mat: Arc<dyn Material>,
