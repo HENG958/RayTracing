@@ -1,6 +1,6 @@
 use crate::interval::Interval;
 use crate::ray::Ray;
-use crate::vec3::Point3;
+use crate::vec3::{Point3, Vec3};
 
 #[derive(Clone)]
 pub struct AABB {
@@ -126,4 +126,12 @@ impl AABB {
             self.z = self.z.expand(delta);
         }
     }
+}
+
+pub fn add(bbox: &AABB, offset: &Vec3) -> AABB {
+    AABB::new(
+        Interval::new(bbox.x.min + offset.x, bbox.x.max + offset.x),
+        Interval::new(bbox.y.min + offset.y, bbox.y.max + offset.y),
+        Interval::new(bbox.z.min + offset.z, bbox.z.max + offset.z),
+    )
 }
