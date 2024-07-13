@@ -53,6 +53,8 @@ pub struct Camera {
     pub pixel100_loc: Point3,
     pub samples_per_pixel: u32,
     pub max_depth: i32,
+    pub sqrt_spp: u32,
+    pub recip_sqrt_spp: f64,
     pub background: Color,
     pub pixel_samples_scale: f64,
     pub defocus_angle: f64,
@@ -88,7 +90,10 @@ impl Camera {
         let theta: f64 = vfov * std::f64::consts::PI / 180.0;
         let h: f64 = f64::tan(theta / 2.0);
 
-        let pixel_samples_scale: f64 = 1.0 / samples_per_pixel as f64;
+        //let pixel_samples_scale: f64 = 1.0 / samples_per_pixel as f64;
+        let sqrt_spp: u32 = (samples_per_pixel as f64).sqrt() as u32;
+        let pixel_samples_scale: f64 = 1.0 / (sqrt_spp * sqrt_spp) as f64;
+        let recip_sqrt_spp: f64 = 1.0 / sqrt_spp as f64;
         let viewport_height: f64 = 2.0 * h * focus_distance;
         let viewport_width: f64 = viewport_height * (image_width as f64 / image_height as f64);
         // edge vector
@@ -131,6 +136,8 @@ impl Camera {
             viewport_upper_left,
             pixel100_loc,
             max_depth,
+            sqrt_spp,
+            recip_sqrt_spp,
             background,
             samples_per_pixel,
             pixel_samples_scale,
@@ -167,10 +174,12 @@ impl Camera {
                 for i in 0..image_width {
                     let mut pixel_color: Color = Color::new(0.0, 0.0, 0.0);
 
-                    for _sample in 0..copy.samples_per_pixel {
-                        let r = copy.get_ray(i, j);
-                        pixel_color =
-                            pixel_color + ray_color(r, copy.max_depth, &world, &copy.background);
+                    for s_j in 0..copy.sqrt_spp {
+                        for s_i in 0..copy.sqrt_spp {
+                            let r = copy.get_ray(i, j, s_i, s_j);
+                            pixel_color = pixel_color
+                                + ray_color(r, copy.max_depth, &world, &copy.background);
+                        }
                     }
                     pixel_color *= copy.pixel_samples_scale;
 
@@ -207,9 +216,15 @@ impl Camera {
             }
         }
     }
+    fn sample_square_stratified(&self, s_i: u32, s_j: u32) -> Vec3 {
+        let px = (s_i as f64 + thread_rng().gen_range(0.0..1.0)) * self.recip_sqrt_spp - 0.5;
+        let py = (s_j as f64 + thread_rng().gen_range(0.0..1.0)) * self.recip_sqrt_spp - 0.5;
 
-    pub fn get_ray(&self, u: u32, v: u32) -> Ray {
-        let offset: Vec3 = sample_square();
+        Vec3::new(px, py, 0.0)
+    }
+
+    pub fn get_ray(&self, u: u32, v: u32, s_i: u32, s_j: u32) -> Ray {
+        let offset = self.sample_square_stratified(s_i, s_j);
         let u: f64 = (u as f64) + offset.x;
         let v: f64 = (v as f64) + offset.y;
         let pixel_center: Point3 =
@@ -245,7 +260,7 @@ fn ray_color(r: Ray, depth: i32, world: &dyn Hittable, background: &Color) -> Co
     *background
 }
 
-fn sample_square() -> Vec3 {
+fn _sample_square() -> Vec3 {
     let mut rng = rand::thread_rng();
     Vec3::new(rng.gen_range(-0.5..0.5), rng.gen_range(-0.5..0.5), 0.0)
 }
