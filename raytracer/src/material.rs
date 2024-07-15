@@ -1,8 +1,9 @@
 use crate::color::Color;
 use crate::hittable::HitRecord;
+use crate::onb::Onb;
 use crate::ray::Ray;
 use crate::texture::{SolidColor, Texture};
-use crate::vec3::{random_in_hemisphere, reflect, refract, Point3, Vec3};
+use crate::vec3::{random_cosine_direction, reflect, refract, Point3, Vec3};
 use std::sync::Arc;
 
 pub trait Material: Send + Sync {
@@ -43,13 +44,12 @@ impl Lambertian {
 
 impl Material for Lambertian {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
-        let mut scatter_direction: Vec3 = random_in_hemisphere(rec.normal);
+        let uvw: Onb = Onb::new(&rec.normal);
+        let scatter_direction: Vec3 = uvw.local(&random_cosine_direction());
 
-        if scatter_direction.near_zero() {
-            scatter_direction = rec.normal;
-        }
         let scattered: Ray = Ray::new(rec.p, scatter_direction, r_in.time());
         let attenuation: Color = self.texture.value(rec.u, rec.v, &rec.p);
+        let _pdf = uvw.w().dot(scattered.direction()) / std::f64::consts::PI;
         Some((scattered, attenuation))
     }
 

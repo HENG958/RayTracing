@@ -1,5 +1,5 @@
 use ::std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
-use rand::Rng;
+use rand::{thread_rng, Rng};
 #[derive(Clone, Debug, Copy)]
 pub struct Vec3 {
     pub x: f64,
@@ -93,6 +93,18 @@ pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
         in_unit_sphere
     } else {
         -in_unit_sphere
+    }
+}
+
+pub fn random_cosine_direction() -> Vec3 {
+    let r1: f64 = thread_rng().gen_range(0.0..1.0);
+    let r2: f64 = thread_rng().gen_range(0.0..1.0);
+
+    let phi = 2.0 * r1 * std::f64::consts::PI;
+    Vec3 {
+        x: phi.cos() * r2.sqrt(),
+        y: phi.sin() * r2.sqrt(),
+        z: (1.0 - r2).sqrt(),
     }
 }
 
