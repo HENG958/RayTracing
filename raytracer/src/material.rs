@@ -12,6 +12,10 @@ pub trait Material: Send + Sync {
     fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color)> {
         None
     }
+
+    fn scatter_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
+        0.0
+    }
 }
 
 #[derive(Clone)]
@@ -47,6 +51,11 @@ impl Material for Lambertian {
         let scattered: Ray = Ray::new(rec.p, scatter_direction, r_in.time());
         let attenuation: Color = self.texture.value(rec.u, rec.v, &rec.p);
         Some((scattered, attenuation))
+    }
+
+    fn scatter_pdf(&self, _r_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        let cosine: f64 = rec.normal.dot(&scattered.direction().unit()).max(0.0);
+        cosine / std::f64::consts::PI
     }
 }
 

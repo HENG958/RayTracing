@@ -352,11 +352,11 @@ fn quad() {
 }
 
 fn cornell_box() {
-    let path = std::path::Path::new("output/book3/image2.jpg");
+    let path = std::path::Path::new("output/book3/image4.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
-    let diffuse = Arc::new(DiffuseLight::new(&Color::new(7.0, 7.0, 7.0)));
+    let diffuse = Arc::new(DiffuseLight::new(&Color::new(15.0, 15.0, 15.0)));
     let red = Arc::new(Lambertian::new(&Color::new(0.65, 0.05, 0.05)));
     let white = Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73)));
     let green = Arc::new(Lambertian::new(&Color::new(0.12, 0.45, 0.15)));
@@ -382,9 +382,9 @@ fn cornell_box() {
     )));
 
     world.add(Arc::new(Quad::new(
-        &Point3::new(113.0, 554.0, 127.0),
-        &Vec3::new(330.0, 0.0, 0.0),
-        &Vec3::new(0.0, 0.0, 305.0),
+        &Point3::new(213.0, 554.0, 227.0),
+        &Vec3::new(130.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 105.0),
         diffuse,
     )));
     world.add(Arc::new(Quad::new(
@@ -442,7 +442,7 @@ fn cornell_box() {
         aspect_ratio: 1.0,
         image_width: 600,
         quality: 100,
-        samples_per_pixel: 64,
+        samples_per_pixel: 500,
         max_depth: 50,
         background: Color::new(0.0, 0.0, 0.0),
     };
@@ -517,7 +517,7 @@ fn main() {
     let mut world = hittable_list::HittableList::new();
     world.add(Arc::new(BvhNode::from_list(&mut boxes1)));
 
-    let light = Arc::new(DiffuseLight::new(&Color::new(7.0, 7.0, 7.0)));
+    let light = Arc::new(DiffuseLight::new(&Color::new(15.0, 15.0, 15.0)));
     world.add(Arc::new(Quad::new(
         &Point3::new(123.0, 554.0, 147.0),
         &Vec3::new(300.0, 0.0, 0.0),
