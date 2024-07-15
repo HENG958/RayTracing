@@ -253,7 +253,7 @@ fn ray_color(r: Ray, depth: i32, world: &dyn Hittable, background: &Color) -> Co
     if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
         return if let Some((scattered, attenuation)) = rec.mat.scatter(&r, &rec) {
             let scattering_pdf = rec.mat.scatter_pdf(&r, &rec, &scattered);
-            let pdf = 1.0 / (2.0 * std::f64::consts::PI);
+            let pdf = scattering_pdf;
             attenuation * scattering_pdf * ray_color(scattered, depth - 1, world, background) / pdf
         } else {
             rec.mat.emitted(rec.u, rec.v, &rec.p)

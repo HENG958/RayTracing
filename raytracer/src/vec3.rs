@@ -73,15 +73,6 @@ impl Vec3 {
         Vec3::random_in_unit_sphere().unit()
     }
 
-    pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
-        let in_unit_sphere = Vec3::random_in_unit_sphere();
-        if in_unit_sphere.dot(&normal) > 0.0 {
-            in_unit_sphere
-        } else {
-            -in_unit_sphere
-        }
-    }
-
     pub fn unit(&self) -> Vec3 {
         let length = self.length();
         if length == 0.0 {
@@ -94,6 +85,14 @@ impl Vec3 {
     pub fn near_zero(&self) -> bool {
         const EPSILON: f64 = 1e-8;
         self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON
+    }
+}
+pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
+    let in_unit_sphere = Vec3::random_in_unit_sphere();
+    if in_unit_sphere.dot(&normal) > 0.0 {
+        in_unit_sphere
+    } else {
+        -in_unit_sphere
     }
 }
 
