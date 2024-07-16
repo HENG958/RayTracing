@@ -251,7 +251,7 @@ fn ray_color(r: Ray, depth: i32, world: &dyn Hittable, background: &Color) -> Co
     }
 
     if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
-        let color_from_emission = rec.mat.emitted(rec.u, rec.v, &rec.p);
+        let color_from_emission = rec.mat.emitted(&r, &rec, rec.u, rec.v, &rec.p);
         return if let Some((scattered, attenuation, _pdf)) = rec.mat.scatter(&r, &rec) {
             let on_light = Point3::new(
                 thread_rng().gen_range(213.0..343.0),

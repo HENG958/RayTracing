@@ -7,7 +7,7 @@ use crate::vec3::{random_cosine_direction, reflect, refract, Point3, Vec3};
 use std::sync::Arc;
 
 pub trait Material: Send + Sync {
-    fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
+    fn emitted(&self, _r_in: &Ray, _rec: &HitRecord, _u: f64, _v: f64, _p: &Point3) -> Color {
         Color::new(0.0, 0.0, 0.0)
     }
     fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color, f64)> {
@@ -150,8 +150,12 @@ impl DiffuseLight {
 }
 
 impl Material for DiffuseLight {
-    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color {
-        self.tex.value(u, v, p)
+    fn emitted(&self, _r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
+        if !rec.front_face {
+            Color::new(0.0, 0.0, 0.0)
+        } else {
+            self.tex.value(u, v, p)
+        }
     }
 
     fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color, f64)> {
