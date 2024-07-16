@@ -12,6 +12,7 @@ pub mod interval;
 pub mod material;
 pub mod medium;
 pub mod onb;
+pub mod pdf;
 pub mod perlin;
 pub mod quad;
 pub mod ray;
@@ -353,7 +354,7 @@ fn quad() {
 }
 
 fn cornell_box() {
-    let path = std::path::Path::new("output/book3/image8.jpg");
+    let path = std::path::Path::new("output/book3/image9.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -443,7 +444,7 @@ fn cornell_box() {
         aspect_ratio: 1.0,
         image_width: 600,
         quality: 100,
-        samples_per_pixel: 10,
+        samples_per_pixel: 500,
         max_depth: 50,
         background: Color::new(0.0, 0.0, 0.0),
     };
