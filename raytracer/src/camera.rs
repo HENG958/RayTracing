@@ -251,12 +251,33 @@ fn ray_color(r: Ray, depth: i32, world: &dyn Hittable, background: &Color) -> Co
     }
 
     if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
-        return if let Some((scattered, attenuation)) = rec.mat.scatter(&r, &rec) {
-            let scattering_pdf = rec.mat.scatter_pdf(&r, &rec, &scattered);
-            let pdf = scattering_pdf;
-            attenuation * scattering_pdf * ray_color(scattered, depth - 1, world, background) / pdf
+        let color_from_emission = rec.mat.emitted(rec.u, rec.v, &rec.p);
+        return if let Some((scattered, attenuation, _pdf)) = rec.mat.scatter(&r, &rec) {
+            let on_light = Point3::new(
+                thread_rng().gen_range(213.0..343.0),
+                554.0,
+                thread_rng().gen_range(227.0..332.0),
+            );
+            let to_light = on_light - rec.p;
+            let distance_squared = to_light.length_squared();
+            let to_light = to_light.unit();
+            let light_area = 130.0 * 110.0;
+            let light_cosine = to_light.y.abs();
+            let light_pdf = distance_squared / (light_cosine * light_area);
+            let _scattered_pdf = rec.mat.scatter_pdf(&r, &rec, &scattered);
+            if to_light.dot(&rec.normal) < 0.0 {
+                return color_from_emission;
+            }
+
+            if light_cosine < 0.000001 {
+                return color_from_emission;
+            }
+            let scattered_ray = Ray::new(rec.p, to_light, r.time());
+            let light = ray_color(scattered_ray, depth - 1, world, background);
+
+            attenuation * rec.mat.scatter_pdf(&r, &rec, &scattered) * light / light_pdf
         } else {
-            rec.mat.emitted(rec.u, rec.v, &rec.p)
+            color_from_emission
         };
     }
     *background
