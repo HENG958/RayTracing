@@ -2,6 +2,8 @@ use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
+use crate::vec3::{Vec3, Point3};
+use rand::{thread_rng, Rng};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -47,6 +49,22 @@ impl Hittable for HittableList {
 
     fn bounding_box(&self) -> AABB {
         self.bbox.clone()
+    }
+
+    fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        let mut size: u32 = 0;
+        let mut sum: f64 = 0.0;
+        for object in self.objects.iter() {
+            sum += object.pdf_value(origin, direction);
+            size += 1;
+        }
+        sum /= size as f64;
+        sum
+    }
+
+    fn random(&self, origin: &Point3) -> Vec3 {
+        let size = self.objects.len();
+        self.objects[thread_rng().gen_range(0..size)].random(origin)
     }
 }
 

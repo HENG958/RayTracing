@@ -7,6 +7,7 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{cross, Point3, Vec3};
 use std::sync::Arc;
+use rand::{thread_rng, Rng};
 
 pub struct Quad {
     q: Point3,
@@ -17,6 +18,7 @@ pub struct Quad {
     bbox: AABB,
     normal: Vec3,
     d: f64,
+    area: f64,
 }
 
 impl Quad {
@@ -28,6 +30,7 @@ impl Quad {
         let normal = n / n.length();
         let d = q.dot(&normal);
         let w = n / n.dot(&n);
+        let area = n.length();
         Self {
             q: *q,
             u: *u,
@@ -37,6 +40,7 @@ impl Quad {
             bbox: AABB::two_aabb(&bbox1, &bbox2),
             normal,
             d,
+            area,
         }
     }
 }
@@ -76,6 +80,25 @@ impl Hittable for Quad {
 
     fn bounding_box(&self) -> AABB {
         self.bbox.clone()
+    }
+
+    fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        if let Some(rec) = self.hit(
+            &Ray::new(*origin, *direction, 0.0),
+            Interval::new(0.001, f64::INFINITY),
+        ) {
+            let distance_squared = rec.t * rec.t * direction.length_squared();
+            let cosine = direction.dot(&rec.normal).abs() / direction.length();
+
+            distance_squared / (cosine * self.area)
+        } else {
+            0.0
+        }
+    }
+
+    fn random(&self, o: &Vec3) -> Vec3 {
+        let random_point = self.q + self.u * thread_rng().gen_range(0.0..1.0) + self.v * thread_rng().gen_range(0.0..1.0);
+        random_point - *o
     }
 }
 

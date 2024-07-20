@@ -2,7 +2,7 @@ use crate::color::Color;
 use crate::hittable::Hittable;
 use crate::hittable_list::HittableList;
 use crate::interval::Interval;
-use crate::pdf::{CosinePDF, Pdf};
+use crate::pdf::{HittablePDF, Pdf};
 use crate::ray::Ray;
 use crate::vec3::{cross, random_in_unit_disk, Point3, Vec3};
 use image::{ImageBuffer, RgbImage};
@@ -149,7 +149,7 @@ impl Camera {
         }
     }
 
-    pub fn render(&mut self, world: HittableList) {
+    pub fn render(&mut self, world: HittableList, lights: Arc<dyn Hittable>) {
         let progress = if option_env!("CI").unwrap_or_default() == "true" {
             ProgressBar::hidden()
         } else {
@@ -169,6 +169,7 @@ impl Camera {
             // let img = Arc::clone(&img);
             let progress = Arc::clone(&progress);
             let world = world.clone();
+            let lights = lights.clone();
             let copy = self.clone();
             let rend_line = thread::spawn(move || {
                 let mut line: Vec<Color> = Vec::with_capacity(image_width as usize);
@@ -179,7 +180,7 @@ impl Camera {
                         for s_i in 0..copy.sqrt_spp {
                             let r = copy.get_ray(i, j, s_i, s_j);
                             pixel_color = pixel_color
-                                + ray_color(r, copy.max_depth, &world, &copy.background);
+                                + copy.ray_color(r, copy.max_depth, &world, lights.clone());
                         }
                     }
                     pixel_color *= copy.pixel_samples_scale;
@@ -244,30 +245,39 @@ impl Camera {
         let p = random_in_unit_disk();
         self.camera_center + (self.defocus_disk_u * p.x) + (self.defocus_disk_v * p.y)
     }
+
+    fn ray_color(
+        &self,
+        r: Ray,
+        depth: i32,
+        world: &dyn Hittable,
+        lights: Arc<dyn Hittable>,
+    ) -> Color {
+        if depth <= 0 {
+            return Color::new(0.0, 0.0, 0.0);
+        }
+        if let Some(hit_record) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
+            let color_from_emission =
+                hit_record
+                    .mat
+                    .emitted(&r, &hit_record, hit_record.u, hit_record.v, &hit_record.p);
+            return if let Some((_scattered, attenuation, _pdf)) =
+                hit_record.mat.scatter(&r, &hit_record)
+            {
+                let light_pdf = HittablePDF::new(lights.clone(), &hit_record.p);
+                let scattered = Ray::new(hit_record.p, light_pdf.generate(), r.time());
+                let pdf_val = light_pdf.value(&scattered.direction());
+                let scattering_pdf = hit_record.mat.scatter_pdf(&r, &hit_record, &scattered);
+                let sample_color = self.ray_color(scattered, depth - 1, world, lights);
+                attenuation * scattering_pdf * sample_color / pdf_val + color_from_emission
+            } else {
+                color_from_emission
+            };
+        }
+        self.background
+    }
 }
 
-fn ray_color(r: Ray, depth: i32, world: &dyn Hittable, background: &Color) -> Color {
-    if depth < 0 {
-        return Color::new(0.0, 0.0, 0.0);
-    }
-
-    if let Some(rec) = world.hit(&r, Interval::new(0.001, f64::INFINITY)) {
-        let color_from_emission = rec.mat.emitted(&r, &rec, rec.u, rec.v, &rec.p);
-        return if let Some((scattered, attenuation, _pdf)) = rec.mat.scatter(&r, &rec) {
-            let surface_pdf = CosinePDF::new(&rec.normal);
-            let pdf_value = surface_pdf.value(scattered.direction());
-            let scattered = Ray::new(rec.p, surface_pdf.generate(), r.time());
-            color_from_emission
-                + attenuation
-                    * rec.mat.scatter_pdf(&r, &rec, &scattered)
-                    * ray_color(scattered, depth - 1, world, background)
-                    / pdf_value
-        } else {
-            color_from_emission
-        };
-    }
-    *background
-}
 
 fn _sample_square() -> Vec3 {
     let mut rng = rand::thread_rng();

@@ -34,6 +34,7 @@ use texture::{CheckerTexture, ImageTexture, NoiseTexture, SolidColor};
 use translate::{RotateY, Translate};
 use vec3::Point3;
 use vec3::Vec3;
+use hittable_list::HittableList;
 
 fn bouncing_sphere() {
     let path = std::path::Path::new("output/book2/imagetest.jpg");
@@ -114,6 +115,7 @@ fn bouncing_sphere() {
     }
 
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
+    let lights = Arc::new(HittableList::new());
     let image_setting = camera::ImageConfig {
         aspect_ratio: 16.0 / 9.0,
         image_width: 1200,
@@ -133,7 +135,7 @@ fn bouncing_sphere() {
     };
 
     let mut camera = Camera::new(image_setting, camera_setting);
-    camera.render(world);
+    camera.render(world, lights);
 
     println!(
         "Ouput image as \"{}\"",
@@ -169,6 +171,7 @@ fn earth() {
         earth_surface,
     )));
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
+    let lights = Arc::new(HittableList::new());
 
     let image_settings = ImageConfig {
         aspect_ratio: 16.0 / 9.0,
@@ -189,7 +192,7 @@ fn earth() {
     };
 
     let mut camera = Camera::new(image_settings, camera_settings);
-    camera.render(world);
+    camera.render(world, lights);
 
     println!(
         "Output image as \"{}\"",
@@ -225,6 +228,7 @@ fn perlin() {
         Arc::new(Lambertian::new_texture(pertext)),
     )));
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
+    let lights = Arc::new(HittableList::new());
 
     let image_settings = ImageConfig {
         aspect_ratio: 16.0 / 9.0,
@@ -245,7 +249,7 @@ fn perlin() {
     };
 
     let mut camera = Camera::new(image_settings, camera_settings);
-    camera.render(world);
+    camera.render(world, lights);
 
     println!(
         "Output image as \"{}\"",
@@ -314,7 +318,7 @@ fn quad() {
         lower_teal,
     )));
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
-
+    let lights = Arc::new(HittableList::new());
     let image_settings = ImageConfig {
         aspect_ratio: 1.0,
         image_width: 400,
@@ -334,7 +338,7 @@ fn quad() {
     };
 
     let mut camera = Camera::new(image_settings, camera_settings);
-    camera.render(world);
+    camera.render(world, lights);
 
     println!(
         "Output image as \"{}\"",
@@ -354,7 +358,7 @@ fn quad() {
 }
 
 fn cornell_box() {
-    let path = std::path::Path::new("output/book3/image9.jpg");
+    let path = std::path::Path::new("output/book3/image910.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
@@ -363,6 +367,7 @@ fn cornell_box() {
     let white = Arc::new(Lambertian::new(&Color::new(0.73, 0.73, 0.73)));
     let green = Arc::new(Lambertian::new(&Color::new(0.12, 0.45, 0.15)));
     let mut world = hittable_list::HittableList::new();
+    let lights = HittableList::new();
     world.add(Arc::new(Quad::new(
         &Point3::new(555.0, 0.0, 0.0),
         &Vec3::new(0.0, 555.0, 0.0),
@@ -370,9 +375,9 @@ fn cornell_box() {
         green,
     )));
     world.add(Arc::new(Quad::new(
-        &Point3::new(3.0, 1.0, -2.0),
-        &Vec3::new(2.0, 0.0, 0.0),
-        &Vec3::new(0.0, 2.0, 0.0),
+        &Point3::new(213.0, 554.0, 227.0),
+        &Vec3::new(130.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 105.0),
         diffuse.clone(),
     )));
 
@@ -444,7 +449,7 @@ fn cornell_box() {
         aspect_ratio: 1.0,
         image_width: 600,
         quality: 100,
-        samples_per_pixel: 500,
+        samples_per_pixel: 10,
         max_depth: 50,
         background: Color::new(0.0, 0.0, 0.0),
     };
@@ -459,7 +464,7 @@ fn cornell_box() {
     };
 
     let mut camera = Camera::new(image_settings, camera_settings);
-    camera.render(world);
+    camera.render(world, Arc::new(lights));
 
     println!(
         "Output image as \"{}\"",
@@ -605,6 +610,7 @@ fn main() {
     )));
 
     let world = hittable_list::HittableList::new_form(Arc::new(BvhNode::from_list(&mut world)));
+    let lights = Arc::new(HittableList::new());
 
     let image_settings = ImageConfig {
         aspect_ratio: 1.0,
@@ -625,7 +631,7 @@ fn main() {
     };
 
     let mut camera = Camera::new(image_settings, camera_settings);
-    camera.render(world);
+    camera.render(world, lights);
 
     println!(
         "Output image as \"{}\"",
