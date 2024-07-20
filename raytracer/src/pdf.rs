@@ -1,6 +1,7 @@
 use crate::hittable::Hittable;
 use crate::onb::Onb;
 use crate::vec3::{dot, random_cosine_direction, random_unit_vector, unit_vector, Point3, Vec3};
+use rand::{thread_rng, Rng};
 use std::sync::Arc;
 
 pub trait Pdf: Send + Sync {
@@ -34,7 +35,7 @@ pub struct CosinePDF {
 }
 
 impl CosinePDF {
-    pub fn _new(w: &Vec3) -> Self {
+    pub fn new(w: &Vec3) -> Self {
         let uvw = Onb::new(w);
         Self { uvw }
     }
@@ -70,5 +71,29 @@ impl Pdf for HittablePDF {
     }
     fn generate(&self) -> Vec3 {
         self.objects.random(&self.origin)
+    }
+}
+
+pub struct MixturePDF {
+    p: [Arc<dyn Pdf>; 2],
+}
+
+impl MixturePDF {
+    pub fn new(a: Arc<dyn Pdf>, b: Arc<dyn Pdf>) -> Self {
+        let p = [a, b];
+        Self { p }
+    }
+}
+
+impl Pdf for MixturePDF {
+    fn value(&self, dir: &Vec3) -> f64 {
+        0.5 * self.p[0].value(dir) + 0.5 * self.p[1].value(dir)
+    }
+    fn generate(&self) -> Vec3 {
+        if thread_rng().gen_range(0.0..1.0) < 0.5 {
+            self.p[0].generate()
+        } else {
+            self.p[1].generate()
+        }
     }
 }
