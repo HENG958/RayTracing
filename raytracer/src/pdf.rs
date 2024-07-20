@@ -16,7 +16,7 @@ pub trait Pdf: Send + Sync {
 pub struct SpherePDF {}
 
 impl SpherePDF {
-    fn _new() -> Self {
+    pub fn _new() -> Self {
         Self {}
     }
 }
