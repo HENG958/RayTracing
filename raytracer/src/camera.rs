@@ -5,7 +5,7 @@ use crate::interval::Interval;
 use crate::pdf::{HittablePDF, Pdf};
 use crate::ray::Ray;
 use crate::vec3::{cross, random_in_unit_disk, unit_vector, Point3, Vec3};
-use image::RgbImage; // ImageBuffer
+use image::RgbImage;
 use indicatif::ProgressBar;
 use rand::{thread_rng, Rng};
 use std::sync::{Arc, Mutex};
@@ -299,7 +299,12 @@ impl Sensor {
                 let light_pdf = HittablePDF::new(lights.clone(), &hit_record.p);
                 let scattered = Ray::new(&hit_record.p, &light_pdf.generate(), r.time());
                 let pdf_val = light_pdf.value(&scattered.direction());
+                //let p0 = Arc::new(HittablePDF::new(lights.clone(), &hit_record.p));
+                //let p1 = Arc::new(CosinePDF::new(&hit_record.normal));
+                //let mixed_pdf = MixturePDF::new(p0, p1);
 
+                //let scattered = Ray::new(&hit_record.p, &mixed_pdf.generate(), r.time());
+                //let pdf_val = mixed_pdf.value(&scattered.direction());
                 let scattering_pdf = hit_record.mat.scattering_pdf(&r, &hit_record, &scattered);
                 // println!("{} {}", scattering_pdf, pdf_val);
 
