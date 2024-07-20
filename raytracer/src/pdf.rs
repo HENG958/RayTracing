@@ -1,6 +1,6 @@
-use crate::onb::Onb;
-use crate::vec3::{random_cosine_direction, Vec3, Point3};
 use crate::hittable::Hittable;
+use crate::onb::Onb;
+use crate::vec3::{dot, random_cosine_direction, random_unit_vector, unit_vector, Point3, Vec3};
 use std::sync::Arc;
 
 pub trait Pdf: Send + Sync {
@@ -8,7 +8,7 @@ pub trait Pdf: Send + Sync {
         0.0
     }
     fn generate(&self) -> Vec3 {
-        Vec3::new(0.0, 0.0, 0.0)
+        Vec3::black()
     }
 }
 
@@ -25,7 +25,7 @@ impl Pdf for SpherePDF {
         1.0 / (4.0 * std::f64::consts::PI)
     }
     fn generate(&self) -> Vec3 {
-        Vec3::random_unit_vector()
+        random_unit_vector()
     }
 }
 
@@ -34,7 +34,7 @@ pub struct CosinePDF {
 }
 
 impl CosinePDF {
-    pub fn new(w: &Vec3) -> Self {
+    pub fn _new(w: &Vec3) -> Self {
         let uvw = Onb::new(w);
         Self { uvw }
     }
@@ -42,7 +42,7 @@ impl CosinePDF {
 
 impl Pdf for CosinePDF {
     fn value(&self, dir: &Vec3) -> f64 {
-        let cosine_theta = dir.unit().dot(&self.uvw.w());
+        let cosine_theta = dot(&unit_vector(dir), &self.uvw.w());
         f64::max(0.0, cosine_theta / std::f64::consts::PI)
     }
     fn generate(&self) -> Vec3 {

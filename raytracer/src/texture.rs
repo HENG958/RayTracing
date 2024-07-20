@@ -1,69 +1,63 @@
+use crate::color::Color;
 use crate::interval::Interval;
 use crate::perlin::Perlin;
 use crate::rtw_stb_image::RTWImage;
-use crate::{
-    color::Color,
-    vec3::{Point3, Vec3},
-};
+use crate::vec3::Point3;
 use std::sync::Arc;
 
 pub trait Texture: Send + Sync {
-    fn value(&self, u: f64, v: f64, p: &Vec3) -> Color;
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color;
 }
 
 #[derive(Clone)]
 pub struct SolidColor {
-    color_value: Color,
+    albedo: Color,
 }
 
 impl SolidColor {
-    pub fn new(c: &Color) -> Self {
-        Self { color_value: *c }
+    pub fn new(albedo: &Color) -> Self {
+        Self { albedo: *albedo }
     }
-
-    pub fn new_rgb(r: f64, g: f64, b: f64) -> Self {
-        Self {
-            color_value: Color::new(r, g, b),
-        }
+    pub fn _new_rgb(r: f64, g: f64, b: f64) -> Self {
+        Self::new(&Color::new(r, g, b))
     }
 }
 
 impl Texture for SolidColor {
-    fn value(&self, _u: f64, _v: f64, _p: &Vec3) -> Color {
-        self.color_value
+    fn value(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
+        self.albedo
     }
 }
 
 #[derive(Clone)]
 pub struct CheckerTexture {
-    inv_width: f64,
-    odd: Arc<dyn Texture>,
+    inv_scale: f64,
     even: Arc<dyn Texture>,
+    odd: Arc<dyn Texture>,
 }
 
 impl CheckerTexture {
-    pub fn new(scale: f64, odd: Arc<dyn Texture>, even: Arc<dyn Texture>) -> Self {
+    pub fn _new(scale: f64, even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Self {
         Self {
-            inv_width: 1.0 / scale,
-            odd,
+            inv_scale: 1.0 / scale,
             even,
+            odd,
         }
     }
-
-    pub fn new_rgb(scale: f64, c1: &Color, c2: &Color) -> Self {
+    pub fn new_color(scale: f64, c1: &Color, c2: &Color) -> Self {
         Self {
-            inv_width: 1.0 / scale,
-            odd: Arc::new(SolidColor::new(c1)),
-            even: Arc::new(SolidColor::new(c2)),
+            inv_scale: 1.0 / scale,
+            even: Arc::new(SolidColor::new(c1)),
+            odd: Arc::new(SolidColor::new(c2)),
         }
     }
 }
 
 impl Texture for CheckerTexture {
     fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
-        let x: i32 = (self.inv_width * p.x) as i32;
-        let y: i32 = (self.inv_width * p.y) as i32;
-        let z: i32 = (self.inv_width * p.z) as i32;
+        let x: i32 = (self.inv_scale * p.x).floor() as i32;
+        let y: i32 = (self.inv_scale * p.y).floor() as i32;
+        let z: i32 = (self.inv_scale * p.z).floor() as i32;
 
         let is_even: bool = (x + y + z) % 2 == 0;
 
@@ -88,7 +82,7 @@ impl ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, u: f64, v: f64, _p: &Vec3) -> Color {
+    fn value(&self, u: f64, v: f64, _p: &Point3) -> Color {
         if self.image.height() == 0 {
             return Color::new(0.0, 1.0, 1.0);
         };
@@ -123,18 +117,16 @@ pub struct NoiseTexture {
 }
 
 impl NoiseTexture {
-    pub fn new(scale: f64) -> Self {
+    pub fn new(_scale: f64) -> Self {
         Self {
             noise: Perlin::new(),
-            scale,
+            scale: _scale,
         }
     }
 }
 
 impl Texture for NoiseTexture {
-    fn value(&self, _u: f64, _v: f64, p: &Vec3) -> Color {
-        Color::new(1.0, 1.0, 1.0)
-            * 0.5
-            * (1.0 + (self.scale * p.z + 10.0 * self.noise.turb(p, 7)).sin())
+    fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
+        Color::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z + 10.0 * self.noise.turb(p, 7)).sin())
     }
 }

@@ -1,4 +1,4 @@
-use crate::aabb::AABB;
+use crate::aabb::Aabb;
 use rand::{thread_rng, Rng};
 use std::sync::Arc;
 
@@ -28,7 +28,7 @@ impl ConstantMedium {
         Self {
             boundary,
             neg_inv_density: -1.0 / density,
-            phase_function: Arc::new(Isotropic::new_tex(tex)),
+            phase_function: Arc::new(Isotropic::_new_tex(tex)),
         }
     }
 }
@@ -88,12 +88,12 @@ impl Hittable for ConstantMedium {
             t,
             front_face: true,
             u: rec1.u,
-            v: rec1.v,
+            v: rec1.v, // todo
         };
         Some(rec)
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.boundary.bounding_box()
     }
 }

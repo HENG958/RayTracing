@@ -3,57 +3,51 @@ use crate::hittable::HitRecord;
 use crate::onb::Onb;
 use crate::ray::Ray;
 use crate::texture::{SolidColor, Texture};
-use crate::vec3::{random_cosine_direction, reflect, refract, Point3, Vec3};
+use crate::vec3::{
+    dot, random_cosine_direction, random_unit_vector, reflect, refract, unit_vector, Point3,
+};
+use rand::Rng;
 use std::sync::Arc;
 
 pub trait Material: Send + Sync {
     fn emitted(&self, _r_in: &Ray, _rec: &HitRecord, _u: f64, _v: f64, _p: &Point3) -> Color {
-        Color::new(0.0, 0.0, 0.0)
+        Color::black()
     }
     fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color, f64)> {
         None
     }
-
-    fn scatter_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
         0.0
     }
 }
 
 #[derive(Clone)]
 pub struct Lambertian {
-    texture: Arc<dyn Texture>,
-}
-
-impl std::fmt::Debug for Lambertian {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Lambertian {{ texture: ... }}")
-    }
+    tex: Arc<dyn Texture>,
 }
 
 impl Lambertian {
-    pub fn new(a: &Color) -> Self {
+    pub fn new(albedo: Color) -> Self {
         Self {
-            texture: Arc::new(SolidColor::new(a)),
+            tex: Arc::new(SolidColor::new(&albedo)),
         }
     }
-
-    pub fn new_texture(tex: Arc<dyn Texture>) -> Self {
-        Self { texture: tex }
+    pub fn new_tex(tex: Arc<dyn Texture>) -> Self {
+        Self { tex }
     }
 }
 
 impl Material for Lambertian {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color, f64)> {
-        let uvw: Onb = Onb::new(&rec.normal);
-        let scatter_direction: Vec3 = uvw.local(&random_cosine_direction());
+        let uvw = Onb::new(&rec.normal);
+        let scatter_direction = uvw.local(&random_cosine_direction());
 
-        let scattered: Ray = Ray::new(rec.p, scatter_direction, r_in.time());
-        let attenuation: Color = self.texture.value(rec.u, rec.v, &rec.p);
-        let pdf = uvw.w().dot(scattered.direction()) / std::f64::consts::PI;
+        let scattered = Ray::new(&rec.p, &unit_vector(&scatter_direction), r_in.time());
+        let attenuation = self.tex.value(rec.u, rec.v, &rec.p);
+        let pdf = dot(&uvw.w(), &scattered.direction()) / std::f64::consts::PI;
         Some((scattered, attenuation, pdf))
     }
-
-    fn scatter_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
         1.0 / (2.0 * std::f64::consts::PI)
     }
 }
@@ -65,22 +59,18 @@ pub struct Metal {
 }
 
 impl Metal {
-    pub fn new(a: &Color, f: f64) -> Self {
-        let fuzz: f64 = if f < 1.0 { f } else { 1.0 };
-        Self { albedo: *a, fuzz }
+    pub fn new(albedo: Color, fuzz: f64) -> Self {
+        Self { albedo, fuzz }
     }
 }
 
 impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color, f64)> {
-        let reflected: Vec3 = reflect(&r_in.direction().unit(), &rec.normal);
-        let scattered: Ray = Ray::new(
-            rec.p,
-            reflected + Vec3::random_in_unit_sphere() * self.fuzz,
-            r_in.time(),
-        );
-        let attenuation: Color = self.albedo;
-        if scattered.direction().dot(&rec.normal) > 0.0 {
+        let mut reflected = reflect(&r_in.direction(), &rec.normal);
+        reflected = unit_vector(&reflected) + random_unit_vector() * self.fuzz;
+        let scattered = Ray::new(&rec.p, &reflected, r_in.time());
+        let attenuation = self.albedo;
+        if dot(&scattered.direction(), &rec.normal) > 0.0 {
             Some((scattered, attenuation, 1.0))
         } else {
             None
@@ -89,51 +79,46 @@ impl Material for Metal {
 }
 
 pub struct Dielectric {
-    ir: f64,
+    refraction_index: f64,
 }
 
 impl Dielectric {
-    pub fn new(index_of_refraction: f64) -> Self {
-        Self {
-            ir: index_of_refraction,
-        }
+    pub(crate) fn new(refraction_index: f64) -> Self {
+        Self { refraction_index }
     }
-
-    fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
-        // Use Schlick's approximation for reflectance.
-        let r0: f64 = ((1.0 - ref_idx) / (1.0 + ref_idx)).powi(2);
-        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+    pub fn reflectance(cos: f64, refraction_index: f64) -> f64 {
+        let mut r0 = (1.0 - refraction_index) / (1.0 + refraction_index);
+        r0 *= r0;
+        r0 + (1.0 - r0) * f64::powf(1.0 - cos, 5.0)
     }
 }
 
 impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color, f64)> {
-        let refraction_ratio: f64 = if rec.front_face {
-            1.0 / self.ir
+        let attenuation = Color::white();
+        let ri = if rec.front_face {
+            1.0 / self.refraction_index
         } else {
-            self.ir
+            self.refraction_index
         };
 
-        let unit_direction: Vec3 = r_in.direction().unit();
-        let cos_theta: f64 = (-unit_direction).dot(&rec.normal).min(1.0);
-        let sin_theta: f64 = f64::sqrt(1.0 - cos_theta * cos_theta);
+        let unit_direction = unit_vector(&r_in.direction());
+        let cos_theta = f64::min(dot(&(-unit_direction), &rec.normal), 1.0);
+        let sin_theta = f64::sqrt(1.0 - cos_theta * cos_theta);
 
-        let cannot_refract: bool = refraction_ratio * sin_theta > 1.0;
-        let direction: Vec3 = if cannot_refract
-            || Self::reflectance(cos_theta, refraction_ratio) > rand::random::<f64>()
-        {
-            reflect(&unit_direction, &rec.normal)
-        } else {
-            refract(&unit_direction, &rec.normal, refraction_ratio)
-        };
+        let mut rng = rand::thread_rng();
+        let direction =
+            if ri * sin_theta > 1.0 || Self::reflectance(cos_theta, ri) > rng.gen_range(0.0..1.0) {
+                reflect(&unit_direction, &rec.normal)
+            } else {
+                refract(&unit_direction, &rec.normal, ri)
+            };
 
-        let scattered: Ray = Ray::new(rec.p, direction, r_in.time());
-        let attenuation: Color = Color::new(1.0, 1.0, 1.0);
+        let scattered = Ray::new(&rec.p, &direction, r_in.time());
         Some((scattered, attenuation, 1.0))
     }
 }
 
-#[derive(Clone)]
 pub struct DiffuseLight {
     tex: Arc<dyn Texture>,
 }
@@ -152,41 +137,36 @@ impl DiffuseLight {
 impl Material for DiffuseLight {
     fn emitted(&self, _r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color {
         if !rec.front_face {
-            Color::new(0.0, 0.0, 0.0)
+            Color::black()
         } else {
             self.tex.value(u, v, p)
         }
     }
-
-    fn scatter(&self, _r_in: &Ray, _rec: &HitRecord) -> Option<(Ray, Color, f64)> {
-        None
-    }
 }
 
 pub struct Isotropic {
-    albedo: Arc<dyn Texture>,
+    tex: Arc<dyn Texture>,
 }
 
 impl Isotropic {
-    pub fn new(a: &Color) -> Self {
+    pub fn new(albedo: &Color) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::new(a)),
+            tex: Arc::new(SolidColor::new(albedo)),
         }
     }
-    pub fn new_tex(tex: Arc<dyn Texture>) -> Self {
-        Self { albedo: tex }
+    pub fn _new_tex(tex: Arc<dyn Texture>) -> Self {
+        Self { tex }
     }
 }
 
 impl Material for Isotropic {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color, f64)> {
-        let scattered: Ray = Ray::new(rec.p, Vec3::random_in_unit_sphere(), r_in.time());
-        let attenuation: Color = self.albedo.value(rec.u, rec.v, &rec.p);
+        let scattered = Ray::new(&rec.p, &random_unit_vector(), r_in.time());
+        let attenuation = self.tex.value(rec.u, rec.v, &rec.p);
         let pdf = 1.0 / (4.0 * std::f64::consts::PI);
         Some((scattered, attenuation, pdf))
     }
-
-    fn scatter_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _r_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
         1.0 / (4.0 * std::f64::consts::PI)
     }
 }

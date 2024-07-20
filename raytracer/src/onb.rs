@@ -1,4 +1,4 @@
-use crate::vec3::{cross, Vec3};
+use crate::vec3::{cross, unit_vector, Vec3};
 use std::ops::{Index, IndexMut};
 
 pub struct Onb {
@@ -7,15 +7,15 @@ pub struct Onb {
 
 impl Onb {
     pub fn new(w: &Vec3) -> Self {
-        let unit_w = w.unit();
+        let unit_w = unit_vector(w);
         let a = if w.x.abs() > 0.9 {
             Vec3::new(0.0, 1.0, 0.0)
         } else {
             Vec3::new(1.0, 0.0, 0.0)
         };
-        let v = cross(&unit_w, &a).unit();
+        let v = unit_vector(&cross(&unit_w, &a));
         let u = cross(&unit_w, &v);
-        let mut axis = [Vec3::new(1.0, 1.0, 1.0); 3];
+        let mut axis = [Vec3::white(); 3];
         axis[0] = u;
         axis[1] = v;
         axis[2] = unit_w;

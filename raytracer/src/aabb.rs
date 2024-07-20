@@ -3,19 +3,13 @@ use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
 
 #[derive(Clone)]
-pub struct AABB {
+pub struct Aabb {
     pub x: Interval,
     pub y: Interval,
     pub z: Interval,
 }
 
-impl AABB {
-    pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        let mut aabb = Self { x, y, z };
-        aabb.pad_to_minimums();
-        aabb
-    }
-
+impl Aabb {
     pub fn zero() -> Self {
         Self {
             x: Interval::new(0.0, 0.0),
@@ -23,7 +17,11 @@ impl AABB {
             z: Interval::new(0.0, 0.0),
         }
     }
-
+    pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
+        let mut aabb = Self { x, y, z };
+        aabb.pad_to_minimums();
+        aabb
+    }
     pub fn two_point(a: &Point3, b: &Point3) -> Self {
         let x = if a.x <= b.x {
             Interval::new(a.x, b.x)
@@ -44,14 +42,13 @@ impl AABB {
         aabb.pad_to_minimums();
         aabb
     }
-
-    pub fn two_aabb(box0: &Self, box1: &Self) -> Self {
-        let x = Interval::two_intervals(&box0.x, &box1.x);
-        let y = Interval::two_intervals(&box0.y, &box1.y);
-        let z = Interval::two_intervals(&box0.z, &box1.z);
-        Self { x, y, z }
+    pub fn two_aabb(box0: &Aabb, box1: &Aabb) -> Self {
+        Self {
+            x: Interval::two_interval(&box0.x, &box1.x),
+            y: Interval::two_interval(&box0.y, &box1.y),
+            z: Interval::two_interval(&box0.z, &box1.z),
+        }
     }
-
     pub fn axis_interval(&self, n: u32) -> Interval {
         if n == 1 {
             self.y.clone()
@@ -61,7 +58,6 @@ impl AABB {
             self.x.clone()
         }
     }
-
     pub fn hit(&self, r: &Ray, mut ray_t: Interval) -> bool {
         let ray_orig = r.origin();
         let ray_dir = r.direction();
@@ -96,24 +92,19 @@ impl AABB {
         }
         true
     }
-
-    pub fn longest_axis(&self) -> u32 {
-        let size_x = self.x.size();
-        let size_y = self.y.size();
-        let size_z = self.z.size();
-        if size_x > size_y {
-            if size_x > size_z {
+    pub fn longest_axis(&self) -> usize {
+        if self.x.size() > self.y.size() {
+            if self.x.size() > self.z.size() {
                 0
             } else {
                 2
             }
-        } else if size_y > size_z {
+        } else if self.y.size() > self.z.size() {
             1
         } else {
             2
         }
     }
-
     fn pad_to_minimums(&mut self) {
         let delta = 0.0001;
         if self.x.size() < delta {
@@ -128,8 +119,8 @@ impl AABB {
     }
 }
 
-pub fn add(bbox: &AABB, offset: &Vec3) -> AABB {
-    AABB::new(
+pub fn add(bbox: &Aabb, offset: &Vec3) -> Aabb {
+    Aabb::new(
         Interval::new(bbox.x.min + offset.x, bbox.x.max + offset.x),
         Interval::new(bbox.y.min + offset.y, bbox.y.max + offset.y),
         Interval::new(bbox.z.min + offset.z, bbox.z.max + offset.z),

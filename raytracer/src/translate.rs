@@ -1,4 +1,4 @@
-use crate::aabb::{add, AABB};
+use crate::aabb::{add, Aabb};
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
@@ -8,7 +8,7 @@ use std::sync::Arc;
 pub struct Translate {
     object: Arc<dyn Hittable>,
     offset: Vec3,
-    bbox: AABB,
+    bbox: Aabb,
 }
 
 impl Translate {
@@ -24,16 +24,16 @@ impl Translate {
 
 impl Hittable for Translate {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
-        let offset_r = Ray::new(*r.origin() - self.offset, *r.direction(), r.time());
+        let offset_r = Ray::new(&(r.origin() - self.offset), &r.direction(), r.time());
 
         if let Some(mut rec) = self.object.hit(&offset_r, ray_t) {
-            rec.p = self.offset + rec.p;
+            rec.p += self.offset;
             return Some(rec);
         }
         None
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox.clone()
     }
 }
@@ -42,7 +42,7 @@ pub struct RotateY {
     object: Arc<dyn Hittable>,
     sin_theta: f64,
     cos_theta: f64,
-    bbox: AABB,
+    bbox: Aabb,
 }
 
 impl RotateY {
@@ -75,7 +75,7 @@ impl RotateY {
                 }
             }
         }
-        bbox = AABB::two_point(&min, &max);
+        bbox = Aabb::two_point(&min, &max);
 
         Self {
             object,
@@ -88,14 +88,14 @@ impl RotateY {
 
 impl Hittable for RotateY {
     fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord> {
-        let mut ori = *r.origin();
-        let mut dir = *r.direction();
+        let mut ori = r.origin();
+        let mut dir = r.direction();
 
         ori[0] = r.origin()[0] * self.cos_theta - r.origin()[2] * self.sin_theta;
         ori[2] = r.origin()[0] * self.sin_theta + r.origin()[2] * self.cos_theta;
         dir[0] = r.direction()[0] * self.cos_theta - r.direction()[2] * self.sin_theta;
         dir[2] = r.direction()[0] * self.sin_theta + r.direction()[2] * self.cos_theta;
-        let rotated_r = Ray::new(ori, dir, r.time());
+        let rotated_r = Ray::new(&ori, &dir, r.time());
 
         if let Some(mut rec) = self.object.hit(&rotated_r, ray_t) {
             let mut p = rec.p;
@@ -113,7 +113,7 @@ impl Hittable for RotateY {
         None
     }
 
-    fn bounding_box(&self) -> AABB {
+    fn bounding_box(&self) -> Aabb {
         self.bbox.clone()
     }
 }

@@ -1,7 +1,8 @@
-use crate::aabb::AABB;
+use crate::aabb::Aabb;
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;
+use crate::vec3;
 use crate::vec3::{Point3, Vec3};
 use std::sync::Arc;
 
@@ -26,7 +27,7 @@ impl HitRecord {
         u: f64,
         v: f64,
     ) -> Self {
-        let front_face: bool = r.direction().dot(outward_normal) < 0.0;
+        let front_face: bool = vec3::dot(&r.direction(), outward_normal) < 0.0;
         let mut normal: Vec3 = *outward_normal;
         if !front_face {
             normal = -normal;
@@ -44,12 +45,12 @@ impl HitRecord {
 }
 
 pub trait Hittable: Send + Sync {
-    fn hit(&self, r: &Ray, rat_t: Interval) -> Option<HitRecord>;
-    fn bounding_box(&self) -> AABB;
-    fn pdf_value(&self, _o: &Point3, _v: &Vec3) -> f64 {
+    fn hit(&self, r: &Ray, ray_t: Interval) -> Option<HitRecord>; // Some(hit_record) None
+    fn bounding_box(&self) -> Aabb;
+    fn pdf_value(&self, _origin: &Point3, _direction: &Vec3) -> f64 {
         0.0
     }
-    fn random(&self, _o: &Vec3) -> Vec3 {
+    fn random(&self, _origin: &Point3) -> Vec3 {
         Vec3::new(1.0, 0.0, 0.0)
     }
 }
