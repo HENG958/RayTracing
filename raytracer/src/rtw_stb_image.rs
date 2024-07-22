@@ -24,24 +24,6 @@ impl RTWImage {
         if rtw_image.load(&format!("images/{}", filename)) {
             return rtw_image;
         }
-        if rtw_image.load(&format!("../images/{}", filename)) {
-            return rtw_image;
-        }
-        if rtw_image.load(&format!("../../images/{}", filename)) {
-            return rtw_image;
-        }
-        if rtw_image.load(&format!("../../../images/{}", filename)) {
-            return rtw_image;
-        }
-        if rtw_image.load(&format!("../../../../images/{}", filename)) {
-            return rtw_image;
-        }
-        if rtw_image.load(&format!("../../../../../images/{}", filename)) {
-            return rtw_image;
-        }
-        if rtw_image.load(&format!("../../../../../../images/{}", filename)) {
-            return rtw_image;
-        }
 
         eprintln!("ERROR: Could not load image file '{}'.", image_filename);
         rtw_image

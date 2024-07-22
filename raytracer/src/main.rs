@@ -7,6 +7,7 @@ mod hittable_list;
 mod interval;
 mod material;
 mod medium;
+mod obj;
 mod onb;
 mod pdf;
 mod perlin;
@@ -16,6 +17,7 @@ mod rtw_stb_image;
 mod sphere;
 mod texture;
 mod translate;
+mod triangle;
 mod vec3;
 
 use crate::bvh::BvhNode;
@@ -24,6 +26,7 @@ use crate::color::Color;
 use crate::hittable_list::HittableList;
 use crate::material::{Dielectric, DiffuseLight, Lambertian, Material, Metal};
 use crate::medium::ConstantMedium;
+use crate::obj::read_obj;
 use crate::quad::{cuboid, Quad};
 use crate::sphere::Sphere;
 use crate::texture::{CheckerTexture, ImageTexture, NoiseTexture};
@@ -350,83 +353,126 @@ fn quads() {
 }
 
 fn cornell_box() {
-    let path = std::path::Path::new("output/book3/image15.jpg");
+    let path = std::path::Path::new("output/advanced/imagetest2.jpg");
     let prefix = path.parent().unwrap();
     std::fs::create_dir_all(prefix).expect("Cannot create all the parents");
 
-    let diffuse = Arc::new(DiffuseLight::new(&Color::new(7.0, 7.0, 7.0)));
-    let red = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
+    let diffuse = Arc::new(DiffuseLight::new(&Color::new(5.0, 5.0, 5.0)));
+    //let red = Arc::new(Lambertian::new(Color::new(0.65, 0.05, 0.05)));
     let white = Arc::new(Lambertian::new(Color::new(0.73, 0.73, 0.73)));
-    let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
-
+    //let green = Arc::new(Lambertian::new(Color::new(0.12, 0.45, 0.15)));
+    let yellow = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let level = Arc::new(Lambertian::new_tex(Arc::new(ImageTexture::new("1.png"))));
     let mut world = HittableList::new();
     let mut lights = HittableList::new();
+    // world.add(Arc::new(Quad::new(
+    //     &Point3::new(555.0, 0.0, 0.0),
+    //     &Vec3::new(0.0, 555.0, 0.0),
+    //     &Vec3::new(0.0, 0.0, 555.0),
+    //     green,
+    // )));
     world.add(Arc::new(Quad::new(
-        &Point3::new(555.0, 0.0, 0.0),
+        &Point3::new(-500.0, 0.0, -200.0),
         &Vec3::new(0.0, 555.0, 0.0),
-        &Vec3::new(0.0, 0.0, 555.0),
-        green,
+        &Vec3::new(0.0, 0.0, 1555.0),
+        yellow.clone(),
     )));
     world.add(Arc::new(Quad::new(
-        &Point3::new(0.0, 0.0, 0.0),
-        &Vec3::new(2.0, 555.0, 0.0),
+        &Point3::new(0.0, 554.0, 0.0),
+        &Vec3::new(555.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 555.0),
-        red,
-    )));
-    world.add(Arc::new(Quad::new(
-        &Point3::new(213.0, 554.0, 227.0),
-        &Vec3::new(130.0, 0.0, 0.0),
-        &Vec3::new(0.0, 0.0, 105.0),
         diffuse.clone(),
     )));
     lights.add(Arc::new(Quad::new(
-        &Point3::new(213.0, 554.0, 227.0),
-        &Vec3::new(130.0, 0.0, 0.0),
-        &Vec3::new(0.0, 0.0, 105.0),
+        &Point3::new(0.0, 554.0, 0.0),
+        &Vec3::new(555.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 555.0),
         diffuse,
     )));
     world.add(Arc::new(Quad::new(
-        &Point3::new(0.0, 0.0, 0.0),
-        &Vec3::new(555.0, 0.0, 0.0),
-        &Vec3::new(0.0, 0.0, 555.0),
+        &Point3::new(-1000.0, 0.0, -200.0),
+        &Vec3::new(4000.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 1555.0),
+        yellow.clone(),
+    )));
+    world.add(Arc::new(Quad::new(
+        &Point3::new(-1000.0, 555.0, -200.0),
+        &Vec3::new(4000.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 1555.0),
         white.clone(),
     )));
     world.add(Arc::new(Quad::new(
-        &Point3::new(555.0, 555.0, 555.0),
-        &Vec3::new(-555.0, 0.0, 0.0),
-        &Vec3::new(0.0, 0.0, -555.0),
-        white.clone(),
-    )));
-    world.add(Arc::new(Quad::new(
-        &Point3::new(0.0, 0.0, 555.0),
-        &Vec3::new(555.0, 0.0, 0.0),
+        &Point3::new(1500.0, 0.0, 1000.0),
+        &Vec3::new(-1500.0, 0.0, 0.0),
         &Vec3::new(0.0, 555.0, 0.0),
-        white.clone(),
+        level,
     )));
 
-    //let aluminum = Arc::new(Metal::new(Color::new(0.8, 0.85, 0.88), 0.0));
-    let box1 = cuboid(
-        &Point3::new(0.0, 0.0, 0.0),
-        &Point3::new(165.0, 330.0, 165.0),
-        white,
-    );
-    let box1 = Arc::new(RotateY::new(box1, 15.0));
-    let box1 = Arc::new(Translate::new(box1, &Vec3::new(265.0, 0.0, 295.0)));
-    // world.add(Arc::new(ConstantMedium::new(box1, 0.01, &Color::black())));
-    world.add(box1);
-    let glass = Arc::new(Dielectric::new(1.5));
-    world.add(Arc::new(Sphere::new(
-        &Point3::new(190.0, 90.0, 190.0),
-        90.0,
-        glass,
-    )));
+    let obj = read_obj("monster.obj", 300.0);
+    let obj = RotateY::new(Arc::new(obj), -30.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(-100.0, 100.0, 300.0));
+    world.add(Arc::new(obj));
+    let obj = read_obj("coffin.obj", 300.0);
+    let obj = RotateY::new(Arc::new(obj), 15.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(-400.0, 0.0, 995.0));
+    world.add(Arc::new(obj));
+
+    let obj = read_obj("ClownMask.obj", 300.0);
+    let obj = RotateY::new(Arc::new(obj), 15.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(0.0, 100.0, 995.0));
+    world.add(Arc::new(obj));
+
+    // let obj = read_obj("Stopsign.obj", 30.0);
+    // let obj = RotateY::new(Arc::new(obj), 30.0);
+    // let obj = Translate::new(Arc::new(obj), &Vec3::new(-200.0, 100.0, 500.0));
+    // world.add(Arc::new(obj));
+
+    // let obj = read_obj("RubberDuck.obj", 20.0);
+    // let obj = RotateY::new(Arc::new(obj), 90.0);
+    // let obj = Translate::new(Arc::new(obj), &Vec3::new(-200.0, 100.0, 0.0));
+    // world.add(Arc::new(obj));
+
+    let obj = read_obj("RubberDuck.obj", 20.0);
+    let obj = RotateY::new(Arc::new(obj), 150.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(300.0, 0.0, 555.0));
+    world.add(Arc::new(obj));
+
+    let obj = read_obj("RubberDuck.obj", 20.0);
+    let obj = RotateY::new(Arc::new(obj), 120.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(200.0, 0.0, 455.0));
+    world.add(Arc::new(obj));
+
+    let obj = read_obj("RubberDuck.obj", 20.0);
+    let obj = RotateY::new(Arc::new(obj), 90.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(100.0, 0.0, 355.0));
+    world.add(Arc::new(obj));
+
+    let obj = read_obj("RubberDuck.obj", 20.0);
+    let obj = RotateY::new(Arc::new(obj), 60.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(200.0, 0.0, 255.0));
+    world.add(Arc::new(obj));
+
+    let obj = read_obj("RubberDuck.obj", 20.0);
+    let obj = RotateY::new(Arc::new(obj), 30.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(300.0, 0.0, 155.0));
+    world.add(Arc::new(obj));
+    let obj = read_obj("astronaut.obj", 400.0);
+    let obj = RotateY::new(Arc::new(obj), 150.0);
+    let obj = Translate::new(Arc::new(obj), &Vec3::new(400.0, 100.0, 150.0));
+    world.add(Arc::new(obj));
+    // world.add(Arc::new(Triangle::new(
+    //     &Point3::new(0.0, 0.0, 400.0),
+    //     &Point3::new(256.0, 0.0, 555.0),
+    //     &Point3::new(0.0, 256.0, 555.0),
+    //     white,
+    // )));
 
     let world = HittableList::new_from(Arc::new(BvhNode::from_list(&mut world)));
     // let lights = HittableList::new_from(Arc::new(BvhNode::from_list(&mut lights)));
 
     let image_settings = ImageSettings {
-        aspect_ratio: 1.0,
-        image_width: 600,
+        aspect_ratio: 16.0 / 9.0,
+        image_width: 1920,
         quality: 100,
         samples_per_pixel: 1000,
         max_depth: 50,
@@ -435,7 +481,7 @@ fn cornell_box() {
 
     let camera_settings = CameraSettings {
         vfov: 40.0,
-        look_from: Point3::new(278.0, 278.0, -800.0),
+        look_from: Point3::new(278.0, 400.0, -800.0),
         look_at: Point3::new(278.0, 278.0, 0.0),
         vup: Vec3::new(0.0, 1.0, 0.0),
         defocus_angle: 0.0,
@@ -501,10 +547,17 @@ fn main() {
     }
 
     let mut world = HittableList::new();
+    let mut lights = HittableList::new();
     world.add(Arc::new(BvhNode::from_list(&mut boxes1)));
 
     let light = Arc::new(DiffuseLight::new(&Color::new(15.0, 15.0, 15.0)));
     world.add(Arc::new(Quad::new(
+        &Point3::new(123.0, 554.0, 147.0),
+        &Vec3::new(300.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 265.0),
+        light.clone(),
+    )));
+    lights.add(Arc::new(Quad::new(
         &Point3::new(123.0, 554.0, 147.0),
         &Vec3::new(300.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 265.0),
@@ -589,13 +642,13 @@ fn main() {
     )));
 
     let world = HittableList::new_from(Arc::new(BvhNode::from_list(&mut world)));
-    let lights = Arc::new(HittableList::new());
+    let lights = Arc::new(lights);
 
     let image_settings = ImageSettings {
         aspect_ratio: 1.0,
-        image_width: 400,
+        image_width: 600,
         quality: 100,
-        samples_per_pixel: 200,
+        samples_per_pixel: 2500,
         max_depth: 40,
         background: Color::black(),
     };
